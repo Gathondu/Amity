@@ -1,2 +1,3 @@
-# Amity
-git remote add origin https://github.com/Gathondu/Amity.git
+# AMITY
+
+This is a room allocation system that randomly allocates rooms to fellows and staff.
