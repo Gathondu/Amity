@@ -7,20 +7,23 @@ from Model.LivingSpace import LivingSpace
 
 
 class Amity:
+    offices = []
+    living_spaces = []
+    rooms_allocations = {
+        "offices": {
+            "name": "",
+            "allocated_spaces": 0
+        },
+        "living_spaces": {
+            "name": "",
+            "allocated_spaces": 0
+        }
+    }
+    staff = []
+    fellows = []
 
     def __init__(self):
-        offices = set()
-        living_spaces = set()
-        rooms_allocations = {
-            "offices": {
-                "name": "", "allocated_spaces": 0
-            },
-            "living_spaces": {
-                "name": "", "allocated_spaces": 0
-            }
-        }
-        staff = []
-        fellows = []
+        pass
 
     def add_person(first_name, last_name, position, living_space=None):
         """This function employs  a new new person as  a staff or fellow."""
@@ -34,11 +37,11 @@ class Amity:
         """This function checks for the availability of rooms in amity"""
         pass
 
-    def create_room(name, type):
+    def create_room(type, name):
         """This function creates a new room in amity"""
         pass
 
-    def reallocate_person(name, previous):
+    def reallocate_person(person):
         """This function reallocates an employee from one room to another"""
         pass
 

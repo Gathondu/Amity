@@ -4,5 +4,5 @@
 
 class Person:
 
-    self.name = None
-    self.id = None
+    name = None
+    id = None

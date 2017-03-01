@@ -1,20 +1,125 @@
 import unittest
-
 from Model.Amity import Amity
 
 
 class TestAmity(unittest.TestCase):
 
-    def setUp():
-        a = Amity
+    def setUp(self):
+        # offices: valhalla, hogwarts, occulus, krypton
+        # livingspaces outside, dojo
+        self.reallocate_person = {
+            "1": {
+                "name": "denis gathondu",
+                "type": "staff",
+                "room": "valhalla"
+                },
+            "2": {
+                "name": "sylvia sly",
+                "type": "fellow",
+                "livingspace": True,
+                "room": {
+                    "office": "valhalla",
+                    "livingspace": "outside"
+                    }
+                },
+            "3": {
+                "name": "shem shem",
+                "type": "fellow",
+                "livingspace": False,
+                "room": "valhalla"
+                }
+        }
 
-    # Test that a room is created
-    # Test that a person is added
-    # Test that a person is reallocated
-    # Test that people are loaded
-    # Test that allocations are printed
-    # Test that unallocations are printed
-    # Test that print room prints all the people in the room
-    # Test that state is saved in the database
-    # Test that state is loaded
+    def test_room_is_created(self):
+        room = Amity.create_room("office", "occulus")
+        self.assertEqual("office occulus created", room)
 
+    def test_staff_is_added(self):
+        person = Amity.add_person("DeNis", "Gathondu", "staff")
+        self.assertEqual("staff denis gathondu created", person)
+
+    def test_staff_cannot_request_livingspace(self):
+        with self.assertRaises(ValueError):
+            Amity.add_person("DeNis", "Gathondu", "staff", "yes")
+
+    def test_fellow_is_added(self):
+        person = Amity.add_person("DeNis", "Gathondu", "fellow")
+        self.assertEqual(
+            "fellow denis gathondu created and doesn't require a living space",
+            person
+            )
+
+    def test_fellow_requires_livingspace_is_added_correctly(self):
+        person = Amity.add_person("DeNis", "Gathondu", "fellow", "yes")
+        self.assertEqual(
+            "fellow denis gathondu created and requires a living space",
+            person
+            )
+
+    def test_person_type_is_required(self):
+        with self.assertRaises(TypeError):
+            Amity.add_person("denis", "gathondu")
+
+    @unittest.skip("WIP")
+    def test_person_should_not_be_duplicated(self):
+        pass
+
+    def test_that_fellow_with_livingspace_is_reallocated_livingspace(self):
+        reallocate = Amity.reallocate_person(self.reallocate_person["2"])
+        self.assertEqual(
+            "fellow sylvia sly reallocated to dojo livingspace",
+            reallocate[1]
+            )
+        self.assertEqual(
+            "fellow sylvia sly still in valhalla office",
+            reallocate[0]
+            )
+
+    def test_that_fellow_with_livingspace_is_reallocated_office(self):
+        reallocate = Amity.reallocate_person(self.reallocate_person["2"])
+        self.assertEqual(
+            "fellow sylvia sly reallocated to hogwarts office",
+            reallocate[1]
+            )
+        self.assertEqual(
+            "fellow sylvia sly still in outside livingspace",
+            reallocate[0]
+            )
+
+    def test_that_fellow_without_livingspace_is_reallocated_office(self):
+        reallocate = Amity.reallocate_person(self.reallocate_person["3"])
+        self.assertEqual(
+            "fellow shem shem reallocated to hogwarts office",
+            reallocate
+            )
+
+    def test_that_staff_is_reallocated_office(self):
+        reallocate = Amity.reallocate_person(self.reallocate_person["1"])
+        self.assertEqual(
+            "staff denis gathondu reallocated to hogwarts office",
+            reallocate
+            )
+
+    @unittest.skip("WIP")
+    def test_people_are_loaded(self):
+        pass
+
+    @unittest.skip("WIP")
+    def test_allocations_are_printed(self):
+        pass
+
+    @unittest.skip("WIP")
+    def test_unallocations_are_printed(self):
+        pass
+
+    @unittest.skip("WIP")
+    def test_print_room_prints_all_people_in_room(self):
+        pass
+
+    @unittest.skip("WIP")
+    def test_state_is_saved_in_database(self):
+        pass
+
+    @unittest.skip("WIP")
+    def test_state_is_loaded(self):
+        pass
