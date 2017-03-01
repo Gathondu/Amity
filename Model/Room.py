@@ -4,7 +4,7 @@
 
 class Room:
 
-    def __init__(self):
-        self.name = None
-        self.max_spaces = None
-        self.occupied_spaces = 0
+    name = "Room Name"
+    room_type = "Room Type"
+    max_spaces = 0
+    occupied_spaces = 0

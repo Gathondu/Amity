@@ -1,7 +1,7 @@
 #!/usr/local/bin/python3
 # -*- coding: utf-8 -*-
 
-from Person import Person
+from Model.Person import Person
 
 
 class Fellow(Person):

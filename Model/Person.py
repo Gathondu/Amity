@@ -4,6 +4,5 @@
 
 class Person:
 
-    def __init__(self):
-        self.name = None
-        self.id = None
+    self.name = None
+    self.id = None

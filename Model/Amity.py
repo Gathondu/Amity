@@ -1,5 +1,9 @@
 #!/usr/local/bin/python3
 # -*- coding: utf-8 -*-
+from Model.Fellow import Fellow
+from Model.Staff import Staff
+from Model.Office import Office
+from Model.LivingSpace import LivingSpace
 
 
 class Amity:
@@ -9,10 +13,10 @@ class Amity:
         living_spaces = set()
         rooms_allocations = {
             "offices": {
-                "name":"", "allocated_spaces":0
+                "name": "", "allocated_spaces": 0
             },
             "living_spaces": {
-                "name":"", "allocated_spaces":0
+                "name": "", "allocated_spaces": 0
             }
         }
         staff = []
@@ -34,30 +38,30 @@ class Amity:
         """This function creates a new room in amity"""
         pass
 
-    def reallocate_person(name, previous ):
+    def reallocate_person(name, previous):
         """This function reallocates an employee from one room to another"""
         pass
 
-    def load_people(self, ):
+    def load_people():
         """This function loads employees from the database."""
         pass
 
-    def print_allocations(self, ):
+    def print_allocations():
         """This function prints out the allocated rooms"""
         pass
 
-    def print_unallocated(self, ):
+    def print_unallocated():
         """This function prints out the unallocated rooms"""
         pass
 
-    def print_room(self, ):
+    def print_room():
         """This function prints the rooms contained in amity"""
         pass
 
-    def save_state(self, ):
+    def save_state():
         """This function saves the running state of amity to the database"""
         pass
 
-    def load_state(self, ):
+    def load_state():
         """This function loads amity resourses from the database"""
         pass
