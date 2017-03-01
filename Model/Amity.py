@@ -57,8 +57,8 @@ class Amity:
         """This function prints out the unallocated rooms"""
         pass
 
-    def print_room():
-        """This function prints the rooms contained in amity"""
+    def print_room(room_name):
+        """This function prints the people in rooms contained in amity"""
         pass
 
     def save_state():

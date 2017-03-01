@@ -68,23 +68,23 @@ class TestAmity(unittest.TestCase):
         reallocate = Amity.reallocate_person(self.reallocate_person["2"])
         self.assertEqual(
             "fellow sylvia sly reallocated to dojo livingspace",
-            reallocate[1]
+            reallocate
             )
-        self.assertEqual(
-            "fellow sylvia sly still in valhalla office",
-            reallocate[0]
-            )
+        # self.assertEqual(
+        #     "fellow sylvia sly still in valhalla office",
+        #     reallocate[1]
+        #     )
 
     def test_that_fellow_with_livingspace_is_reallocated_office(self):
         reallocate = Amity.reallocate_person(self.reallocate_person["2"])
         self.assertEqual(
             "fellow sylvia sly reallocated to hogwarts office",
-            reallocate[1]
+            reallocate
             )
-        self.assertEqual(
-            "fellow sylvia sly still in outside livingspace",
-            reallocate[0]
-            )
+        # self.assertEqual(
+        #     "fellow sylvia sly still in outside livingspace",
+        #     reallocate[0]
+        #     )
 
     def test_that_fellow_without_livingspace_is_reallocated_office(self):
         reallocate = Amity.reallocate_person(self.reallocate_person["3"])
@@ -104,17 +104,20 @@ class TestAmity(unittest.TestCase):
     def test_people_are_loaded(self):
         pass
 
-    @unittest.skip("WIP")
     def test_allocations_are_printed(self):
-        pass
+        allocations = Amity.print_allocations()
+        self.assertIsNotNone(allocations)
 
     @unittest.skip("WIP")
     def test_unallocations_are_printed(self):
-        pass
+        unallocations = Amity.print_unallocated()
+        self.assertIsNotNone(unallocations)
 
-    @unittest.skip("WIP")
     def test_print_room_prints_all_people_in_room(self):
-        pass
+        room = Amity.create_room("office", "krypton")
+        # room.occupied_spaces = 2
+        people = Amity.print_room("room.name")
+        self.assertEqual("room.occupied_space", "len(people)")
 
     @unittest.skip("WIP")
     def test_state_is_saved_in_database(self):
