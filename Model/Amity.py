@@ -9,6 +9,7 @@ from Model.LivingSpace import LivingSpace
 class Amity:
     offices = []
     living_spaces = []
+    rooms = [["name", "type", "allocated_spaces"]]
     rooms_allocations = {
         "offices": {
             "name": "",
@@ -22,26 +23,23 @@ class Amity:
     staff = []
     fellows = []
 
-    def __init__(self):
-        pass
-
     def add_person(first_name, last_name, position, living_space=None):
         """This function employs  a new new person as  a staff or fellow."""
         pass
 
-    def allocate_space(name, position, living_space):
+    def allocate_space(name, position, livaing_space):
         """This function allocates space to new employees."""
         pass
 
-    def check_room_availability(name):
+    def check_room_availability(room_name):
         """This function checks for the availability of rooms in amity"""
         pass
 
-    def create_room(type, name):
+    def create_room(type, room_name):
         """This function creates a new room in amity"""
         pass
 
-    def reallocate_person(person):
+    def reallocate_person(person, room_name):
         """This function reallocates an employee from one room to another"""
         pass
 
