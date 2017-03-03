@@ -1,13 +1,18 @@
 #!/usr/local/bin/python3
 # -*- coding: utf-8 -*-
 
-from Model.Person import Person
+from model.person import Person
 
 
 class Fellow(Person):
 
-    def __init__(self):
-        self.wants_living_space = None
+    wants_living_space = False
 
-    def request_living_space(self, ):
-        pass
+    def __init__(self, name, accomodation):
+        self.type = 'fellow'
+        self.name = name
+        if accomodation:
+            self.request_living_space()
+
+    def request_living_space(self):
+        self.wants_living_space = True

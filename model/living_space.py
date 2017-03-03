@@ -4,13 +4,13 @@
 from model.room import Room
 
 
-class Office(Room):
+class LivingSpace(Room):
 
     def __init__(self, name):
         self.name = name
-        self.room_type = "office"
+        self.room_type = "living space"
         self._set_max_space()
         self._occupants = set()
 
     def _set_max_space(self):
-        self._MAX_SPACE = 6
+        self._MAX_SPACE = 4

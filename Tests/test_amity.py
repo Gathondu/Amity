@@ -1,13 +1,18 @@
 import unittest
 from Model.Amity import Amity
 
+# edge cases
+# simplify logic
+# input vs output don't complicate
+
 
 class TestAmity(unittest.TestCase):
 
     def setUp(self):
         # offices: valhalla, hogwarts, occulus, krypton
         # livingspaces outside, dojo
-        self.reallocate_person = {
+        a = Amity()
+        self.reallocate_person = {  # change variable name
             "1": {
                 "name": "denis gathondu",
                 "type": "staff",
@@ -113,16 +118,19 @@ class TestAmity(unittest.TestCase):
         unallocations = Amity.print_unallocated()
         self.assertIsNotNone(unallocations)
 
+    @unittest.skip("WIP")
     def test_print_room_prints_all_people_in_room(self):
         room = Amity.create_room("office", "krypton")
         # room.occupied_spaces = 2
-        people = Amity.print_room("room.name")
-        self.assertEqual("room.occupied_space", "len(people)")
+        people = Amity.print_room(room.name)
+        self.assertEqual(2, len(people))
 
     @unittest.skip("WIP")
     def test_state_is_saved_in_database(self):
         pass
 
-    @unittest.skip("WIP")
     def test_state_is_loaded(self):
+        pass
+
+    def test_check_room_availability(self):
         pass

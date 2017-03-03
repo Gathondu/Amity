@@ -4,5 +4,5 @@
 
 class Person:
 
-    name = None
-    id = None
+    name = 'Person'
+    type = 'Employee'
