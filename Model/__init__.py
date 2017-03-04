@@ -1,3 +1,3 @@
-import amity
-import person
-import room
+import model.amity
+import model.person
+import model.room
