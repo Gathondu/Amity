@@ -21,7 +21,7 @@ class Room:
     @property
     def occupants(self):
         if self._occupants == []:
-            return '{} is empty.'.format(self.name)
+            return 'no one has been assigned to {} yet.'.format(self.name)
         return self._occupants
 
     @property
@@ -31,10 +31,8 @@ class Room:
     @max_space.setter
     def _max_space(self, space):
         if not isinstance(space, int):
-            return '{} is not an integer!!!'
+            raise ValueError('{} is not an integer!!!')
         self._MAX_SPACE = space
-        return "maximum number of people allowed to be assigned to {} has"
-        " been updated to {}.".format(self.name, space)
 
     @property
     def availability(self):
@@ -43,10 +41,13 @@ class Room:
     def add_person(self, person_name):
         if self.availability:
             if person_name in self._occupants:
-                return '{} already assigned space in {}'.format(person_name,
-                                                                self.name)
-            self._occupants.append(person_name)
-            return '{} assigned space in {}'.format(person_name, self.name)
+                raise ValueError('{} already assigned space in {}'.
+                                 format(person_name, self.name))
+            else:
+                self._occupants.append(person_name)
+                return '{} assigned space in {}'.format(person_name, self.name)
+        else:
+            raise ValueError('{} is fully occupied'.format(self.name))
 
 
 class Office(Room):

@@ -3,3 +3,4 @@ tags
 design/
 .pyc
 */__pycache__
+.cache
