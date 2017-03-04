@@ -6,4 +6,4 @@ dependencies:
         - pip install coverage
 test:
     override:
-        - nosetest --with-coverage
+        - nosetests --with-coverage
