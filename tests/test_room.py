@@ -1,3 +1,7 @@
+#!/usr/local/bin/python3
+# -*- coding: utf-8 -*-
+
+
 from unittest import TestCase, skip
 
 from model.room import Room, Office, LivingSpace
