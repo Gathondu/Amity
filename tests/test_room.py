@@ -1,17 +1,34 @@
 from unittest import TestCase, skip
 
-from model.room import Office, LivingSpace
+from model.room import Room, Office, LivingSpace
 
 
 class TestRoom(TestCase):
 
     def setUp(self):
+        self.r = Room()
+        self.room1 = Room('room1')
+        self.room2 = Room(room_type='room2')
+        self.room3 = Room(max_space=1)
         self.o = Office('valhalla')
         self.l = LivingSpace('dojo')
         self.add_to_office = self.o.add_person('denis')
         self.add_to_living_space = self.l.add_person('denis')
 
+    def test_room_is_created_with_default_values_if_not_specified(self):
+        self.assertEqual(
+            ['Room Name', 'Room Type', 0],
+            [self.r.name, self.r.room_type, self.r.max_space]
+         )
+
+    def test_room_is_created_with_correct_values_if_specified(self):
+        self.assertEqual(
+            ['room1', 'room2', 1],
+            [self.room1.name, self.room2.room_type, self.room3.max_space]
+         )
+
     def test_room_is_created_correctly(self):
+        self.assertIsInstance(self.r, Room)
         self.assertIsInstance(self.o, Office)
         self.assertIsInstance(self.l, LivingSpace)
 
@@ -64,6 +81,10 @@ class TestRoom(TestCase):
     def test_empty_room_is_correctly_displayed(self):
         office = Office('krypton')
         self.assertEqual('no one has been assigned to krypton yet.', office.occupants)
+
+    def test_str_method_on_room_displays_room_type_name_and_no_of_occupants(self):
+        self.assertEqual('office valhalla has 1 occupant[s].', str(self.o))
+        self.assertEqual('living space dojo has 1 occupant[s].', str(self.l))
 
     @skip('WIP')
     def test_person_is_successfully_removed_from_room(self):

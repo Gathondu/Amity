@@ -4,3 +4,5 @@ design/
 .pyc
 */__pycache__
 .cache
+.coverage
+.coveragerc
