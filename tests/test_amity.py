@@ -1,5 +1,5 @@
 import unittest
-from Model.Amity import Amity
+from model.amity import Amity
 
 # edge cases
 # simplify logic

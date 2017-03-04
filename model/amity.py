@@ -1,9 +1,7 @@
 #!/usr/local/bin/python3
 # -*- coding: utf-8 -*-
-from model.fellow import Fellow
-from model.staff import Staff
-from model.office import Office
-from model.living_space import LivingSpace
+from model.person import Fellow, Staff
+from model.room import Office, LivingSpace
 
 
 class Amity:
