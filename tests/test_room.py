@@ -1,3 +1,7 @@
+#!/usr/local/bin/python3
+# -*- coding: utf-8 -*-
+
+
 from unittest import TestCase, skip
 
 from model.room import Room, Office, LivingSpace
@@ -45,15 +49,18 @@ class TestRoom(TestCase):
         self.assertEqual('office', self.o.room_type)
 
     def test_person_is_added(self):
-        self.assertEqual('denis assigned space in valhalla', self.add_to_office)
+        self.assertEqual('denis assigned space in valhalla',
+                         self.add_to_office)
 
     def test_add_same_person_fails_with_ValueError(self):
         with self.assertRaises(ValueError):
             self.o.add_person('denis')
 
     def test_same_person_can_be_assigned_space_in_all_rooms(self):
-        self.assertEqual('denis assigned space in valhalla', self.add_to_office)
-        self.assertEqual('denis assigned space in dojo', self.add_to_living_space)
+        self.assertEqual('denis assigned space in valhalla',
+                         self.add_to_office)
+        self.assertEqual('denis assigned space in dojo',
+                         self.add_to_living_space)
 
     def test_correct_occupants(self):
         self.assertEqual(['denis'], self.l.occupants)
@@ -80,9 +87,10 @@ class TestRoom(TestCase):
 
     def test_empty_room_is_correctly_displayed(self):
         office = Office('krypton')
-        self.assertEqual('no one has been assigned to krypton yet.', office.occupants)
+        self.assertEqual('no one has been assigned to krypton yet.',
+                         office.occupants)
 
-    def test_str_method_on_room_displays_room_type_name_and_no_of_occupants(self):
+    def test_str_method_on_room_returns_type_name_and_no_of_occupants(self):
         self.assertEqual('office valhalla has 1 occupant[s].', str(self.o))
         self.assertEqual('living space dojo has 1 occupant[s].', str(self.l))
 
