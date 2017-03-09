@@ -33,8 +33,10 @@ class Amity:
             if len(details) > 4:
                 raise ValueError('give just two names, type of person and' +
                                  ' y if its a fellow who wants accomodation')
-            elif len(details) < 2:
-                raise ValueError('give at least a name and the type of person')
+            elif len(details) < 3:
+                raise ValueError(
+                    'give at least two names and the type of person'
+                    )
 
             name = [name for name in details if name not in
                     ('staff', 'fellow', 'y', 'yes')]
@@ -42,7 +44,7 @@ class Amity:
                 name = ' '.join(name)
             else:
                 raise ValueError('name must be alphabetic chars.' +
-                                 ' {} is incorrect'.format(name))
+                                 ' {} is incorrect'.format(' '.join(name)))
             person_type = [typ for typ in details if typ in
                            ('staff', 'fellow')]
             wants_livingspace = [space for space in details if space

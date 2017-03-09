@@ -117,6 +117,10 @@ class TestAmity(TestCase):
             self.a.add_person('denis gathondu staff')
             self.a.add_person('shem mwangi fellow')
 
+    def test_person_is_assigned_room(self):
+        self.assertEqual('denis assigned space in valhalla',
+                         self.add_to_office)
+
     @skip('WIP')
     def test_that_fellow_with_livingspace_is_reallocated_livingspace(self):
         reallocate = Amity.reallocate_person(self.reallocate_person["2"])
@@ -188,4 +192,39 @@ class TestAmity(TestCase):
 
     @skip('WIP')
     def test_check_room_availability(self):
+        pass
+
+    def test_adding_to_fully_occupied_room_raises_ValueError(self):
+        for person in ['dan', 'shem', 'brian']:
+            self.l.add_person(person)
+        with self.assertRaises(ValueError):
+            self.l.add_person('allan')
+
+    def test_empty_room_is_correctly_displayed(self):
+        office = Office('krypton')
+        self.assertEqual('no one has been assigned to krypton yet.',
+                         office.occupants)
+
+    @skip('WIP')
+    def test_person_is_successfully_removed_from_room(self):
+        pass
+
+    @skip('WIP')
+    def test_if_person_does_not_exist_remove_person_raises_ValueError(self):
+        pass
+
+    @skip('WIP')
+    def test_if_room_is_empty_removing_person_raises_ValueError(self):
+        pass
+
+    @skip('WIP')
+    def test_room_availability_is_updated_upon_removing_person(self):
+        pass
+
+    @skip('WIP')
+    def test_occupants_are_correctly_updated_upon_removing_person(self):
+        pass
+
+    @skip('WIP')
+    def test_correct_number_of_occupied_spaces_after_removing_person(self):
         pass

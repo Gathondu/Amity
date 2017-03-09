@@ -6,3 +6,4 @@ design/
 .cache
 .coverage
 .coveragerc
+/.gtm/
