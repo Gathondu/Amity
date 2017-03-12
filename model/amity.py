@@ -214,12 +214,21 @@ class Amity:
                        self.rooms[new_ind]['name'])
                 )
 
-    def load_people():
-        """This function loads employees from the database."""
+    def load_people(self):
+        """This function loads employees from a txt file."""
         pass
 
-    def print_allocations():
-        """This function prints out the allocated rooms"""
+    def print_allocations(self):
+        # """This function prints out the allocated rooms"""
+        # allocations = {
+        #     room['name'].upper(): room['occupants'] for room in self.rooms
+        #     if room['occupants'] != []
+        #     }
+        # result = ''
+        # for allocation in allocations:
+        #     people = [people[''] for people in alloctions]
+        #     result + '{}/n-*20/n{}'.format(allocation['name'], allocation['occupants'])
+        # return result
         pass
 
     def print_unallocated():
