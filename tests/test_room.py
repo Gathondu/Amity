@@ -61,4 +61,3 @@ class TestRoom(TestCase):
         self.assertEqual(
             'living space dojo can accomodate 4 occupants.', str(self.l)
             )
-

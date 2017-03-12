@@ -5,6 +5,8 @@
 class Person:
 
     def __init__(self, name='person', person_type='employee'):
+        if not ''.join(name.split()).isalpha():
+            raise ValueError('person name can only contain alphabetic chars')
         self.name = name
         self.person_type = person_type
 

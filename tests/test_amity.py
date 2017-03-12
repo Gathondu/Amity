@@ -1,13 +1,10 @@
 #!/usr/local/bin/python3
 # -*- coding: utf-8 -*-
+import json
 
 
 from unittest import TestCase, skip
 from model.amity import Amity
-
-# edge cases
-# simplify logic
-# input vs output don't complicate
 
 
 class TestAmity(TestCase):
@@ -15,9 +12,11 @@ class TestAmity(TestCase):
     def setUp(self):
         self.a = Amity()
         self.occulus = self.a.create_room('office occulus')
+        self.krypton = self.a.create_room('office krypton')
         self.dojo = self.a.create_room('livingspace dojo')
+        self.out = self.a.create_room('livingspace out')
         self.staff = self.a.add_person('denis gathondu staff')
-        self.fellow = self.a.add_person('denis gathondu fellow')
+        self.fellow = self.a.add_person('dan gathondu fellow')
         self.fellow_with_living_space = self.a.add_person(
             'shem mwangi fellow y'
             )
@@ -26,19 +25,17 @@ class TestAmity(TestCase):
         self.assertEqual("office occulus created", self.occulus)
         self.assertEqual("livingspace dojo created", self.dojo)
 
-    def test_room_is_created_correctly(self):
-        from model.room import Office, LivingSpace
-        self.assertIsInstance(self.occulus, Office)
-        self.assertIsInstance(self.dojo, LivingSpace)
-
     def test_multiple_rooms_creation(self):
-        multi_rooms = self.a.create_room(
+        amity = Amity()
+        multi_rooms = amity.create_room(
             'office valhalla', 'livingspace outside', 'office krypton',
             'livingspace flats'
             )
         self.assertEqual(
-            'offices valhalla, krypton and livingspaces outside, ' +
-            'flats created',
+            [
+                'office valhalla created', 'livingspace outside created',
+                'office krypton created', 'livingspace flats created'
+            ],
             multi_rooms
             )
 
@@ -49,7 +46,7 @@ class TestAmity(TestCase):
     def test_room_name_can_only_be_a_string(self):
         with self.assertRaises(ValueError):
             self.a.create_room(4)
-            self.a.create_room('4.7')
+            self.a.create_room(4.7)
 
     def test_room_name_cannot_be_duplicated(self):
         with self.assertRaises(ValueError):
@@ -68,15 +65,27 @@ class TestAmity(TestCase):
 
     def test_person_is_added(self):
         self.assertEqual("staff denis gathondu added", self.staff)
-        self.assertEqual("fellow denis gathondu added", self.fellow)
+        self.assertEqual("fellow dan gathondu added", self.fellow)
         self.assertEqual(
             "fellow shem mwangi added", self.fellow_with_living_space
-            )
+        )
 
-    def test_person_is_added_correctly(self):
-        from model.person import Fellow, Staff
-        self.assertIsInstance(self.a.fellow['denis gathondu'], Fellow)
-        self.assertIsInstance(self.a.staff['denis gathondu'], Staff)
+    def test_multiple_people_added(self):
+        amity = Amity()
+        multi_rooms = amity.create_room(
+            'office valhalla', 'livingspace outside', 'office krypton',
+            'livingspace flats'
+            )
+        people = amity.add_person(
+            'denis gathondu staff', 'dan miti fellow', 'sly sly fellow y'
+        )
+        self.assertEqual(
+            [
+                'staff denis gathondu added', 'fellow dan miti added',
+                'fellow sly sly added'
+            ],
+            people
+            )
 
     def test_staff_cannot_request_livingspace(self):
         with self.assertRaises(ValueError):
@@ -84,17 +93,19 @@ class TestAmity(TestCase):
 
     def test_fellow_requires_livingspace_is_added_correctly(self):
         fellow = [
-            fellow for fellow in self.a.fellow.values()
-            if fellow.wants_living_space is True
+            fellow for fellow in self.a.people
+            if '_wants_living_space' in fellow.keys()
             ]
-        self.assertTrue(fellow[0].wants_living_space)
+        self.assertTrue(fellow[0]['_wants_living_space'])
 
     def test_fellow_not_requiring_livingspace_is_added_correctly(self):
         fellow = [
-            fellow for fellow in self.a.fellow.values()
-            if fellow.wants_living_space is False
+            fellow for fellow in self.a.people
+            if fellow['person_type'] == 'fellow' and
+            '_wants_living_space' not in fellow.keys()
             ]
-        self.assertFalse(fellow[0].wants_living_space)
+        with self.assertRaises(KeyError):
+            fellow[0]['_wants_living_space']
 
     def test_person_name_is_required(self):
         with self.assertRaises(ValueError):
@@ -112,54 +123,75 @@ class TestAmity(TestCase):
         with self.assertRaises(ValueError):
             self.a.add_person('danotienostaff')
 
-    def test_person_should_not_be_duplicated(self):
+    def test_person_cannot_not_be_duplicated(self):
         with self.assertRaises(ValueError):
             self.a.add_person('denis gathondu staff')
+        with self.assertRaises(ValueError):
             self.a.add_person('shem mwangi fellow')
 
-    def test_person_is_assigned_room(self):
-        self.assertEqual('denis assigned space in valhalla',
-                         self.add_to_office)
+    def test_fellow_with_livingspace_is_reallocated_livingspace(self):
+        r = [
+            room for room in self.a.rooms
+            if 'shem mwangi' in room['occupants'] and
+            room['room_type'] == 'living space'
+        ][0]
+        if r['name'] == 'dojo':
+            reallocate = self.a.reallocate_person('shem mwangi', 'out')
+            self.assertEqual(
+                "shem mwangi reallocated to living space out",
+                reallocate
+                )
+        if r['name'] == 'out':
+            reallocate = self.a.reallocate_person('shem mwangi', 'dojo')
+            self.assertEqual(
+                "shem mwangi reallocated to living space dojo",
+                reallocate
+                )
 
-    @skip('WIP')
-    def test_that_fellow_with_livingspace_is_reallocated_livingspace(self):
-        reallocate = Amity.reallocate_person(self.reallocate_person["2"])
-        self.assertEqual(
-            "fellow sylvia sly reallocated to dojo livingspace",
-            reallocate
-            )
-        # self.assertEqual(
-        #     "fellow sylvia sly still in valhalla office",
-        #     reallocate[1]
-        #     )
+    def test_fellow_with_livingspace_is_reallocated_office(self):
+        r = [
+            room for room in self.a.rooms
+            if 'shem mwangi' in room['occupants'] and
+            room['room_type'] == 'office'
+        ][0]
+        if r['name'] == 'occulus':
+            reallocate = self.a.reallocate_person('shem mwangi', 'krypton')
+            self.assertEqual(
+                "shem mwangi reallocated to office krypton",
+                reallocate
+                )
+        if r['name'] == 'krypton':
+            reallocate = self.a.reallocate_person('shem mwangi', 'occulus')
+            self.assertEqual(
+                "shem mwangi reallocated to office occulus",
+                reallocate
+                )
 
-    @skip('WIP')
-    def test_that_fellow_with_livingspace_is_reallocated_office(self):
-        reallocate = Amity.reallocate_person(self.reallocate_person["2"])
-        self.assertEqual(
-            "fellow sylvia sly reallocated to hogwarts office",
-            reallocate
-            )
-        # self.assertEqual(
-        #     "fellow sylvia sly still in outside livingspace",
-        #     reallocate[0]
-        #     )
+    def test_fellow_without_livingspace_is_reallocated_office(self):
+        r = [
+            room for room in self.a.rooms
+            if 'dan gathondu' in room['occupants']
+        ][0]
+        if r['name'] == 'occulus':
+            reallocate = self.a.reallocate_person('dan gathondu', 'krypton')
+            self.assertEqual(
+                "dan gathondu reallocated to office krypton",
+                reallocate
+                )
+        if r['name'] == 'krypton':
+            reallocate = self.a.reallocate_person('dan gathondu', 'occulus')
+            self.assertEqual(
+                "dan gathondu reallocated to office occulus",
+                reallocate
+                )
 
-    @skip('WIP')
-    def test_that_fellow_without_livingspace_is_reallocated_office(self):
-        reallocate = Amity.reallocate_person(self.reallocate_person["3"])
-        self.assertEqual(
-            "fellow shem shem reallocated to hogwarts office",
-            reallocate
-            )
+    def test_staff_reallocated_to_living_space_raises_ValueError(self):
+        with self.assertRaises(ValueError):
+            self.a.reallocate_person('denis gathondu', 'dojo')
 
-    @skip('WIP')
-    def test_that_staff_is_reallocated_office(self):
-        reallocate = Amity.reallocate_person(self.reallocate_person["1"])
-        self.assertEqual(
-            "staff denis gathondu reallocated to hogwarts office",
-            reallocate
-            )
+    def test_fellow_without_livingspace_reallocated_to_living_space_raises_ValueError(self):
+        with self.assertRaises(ValueError):
+            self.a.reallocate_person('dan gathondu', 'dojo')
 
     @skip("WIP")
     def test_people_are_loaded(self):
@@ -175,12 +207,12 @@ class TestAmity(TestCase):
         unallocations = Amity.print_unallocated()
         self.assertIsNotNone(unallocations)
 
-    @skip("WIP")
-    def test_print_room_prints_all_people_in_room(self):
-        room = Amity.create_room("office", "krypton")
-        # room.occupied_spaces = 2
-        people = Amity.print_room(room.name)
-        self.assertEqual(2, len(people))
+    def test_print_room_prints_people_in_room(self):
+        num = [
+            len(people['occupants']) for people in self.a.rooms
+            if people['name'] == 'occulus'
+            ][0]
+        self.assertEqual(num, len(self.a.print_room('occulus')))
 
     @skip("WIP")
     def test_state_is_saved_in_database(self):
@@ -190,24 +222,26 @@ class TestAmity(TestCase):
     def test_state_is_loaded(self):
         pass
 
-    @skip('WIP')
     def test_check_room_availability(self):
-        pass
-
-    def test_adding_to_fully_occupied_room_raises_ValueError(self):
-        for person in ['dan', 'shem', 'brian']:
-            self.l.add_person(person)
-        with self.assertRaises(ValueError):
-            self.l.add_person('allan')
+        num = [
+            room['_MAX_SPACE'] - len(room['occupants']) for room in
+            self.a.rooms if room['name'] == 'occulus'
+        ][0]
+        self.assertEqual(num, self.a.check_room_availability('occulus'))
 
     def test_empty_room_is_correctly_displayed(self):
-        office = Office('krypton')
-        self.assertEqual('no one has been assigned to krypton yet.',
-                         office.occupants)
+        self.a.create_room('office narnia')
+        self.assertEqual('no one has been assigned to narnia yet',
+                         self.a.print_room('narnia'))
 
-    @skip('WIP')
     def test_person_is_successfully_removed_from_room(self):
-        pass
+        person = self.a.print_room('krypton')[0]
+        remove = self.a.remove_person(person.lower(), 'krypton')
+        if person != '':
+            self.assertEqual(
+                '{} removed successfully from krypton'
+                .format(person.lower()), remove
+                )
 
     @skip('WIP')
     def test_if_person_does_not_exist_remove_person_raises_ValueError(self):
