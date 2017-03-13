@@ -214,26 +214,45 @@ class Amity:
                        self.rooms[new_ind]['name'])
                 )
 
-    def load_people(self):
+    def load_people(self, filename):
         """This function loads employees from a txt file."""
-        pass
+        with open(filename, 'r') as file:
+            people = file.readlines()
+        for line in people:
+            self.add_person(line[:-1])
 
     def print_allocations(self):
-        # """This function prints out the allocated rooms"""
-        # allocations = {
-        #     room['name'].upper(): room['occupants'] for room in self.rooms
-        #     if room['occupants'] != []
-        #     }
-        # result = ''
-        # for allocation in allocations:
-        #     people = [people[''] for people in alloctions]
-        #     result + '{}/n-*20/n{}'.format(allocation['name'], allocation['occupants'])
-        # return result
-        pass
+        """This function prints out the allocated rooms"""
+        allocations = {
+            room['name'].upper(): room['occupants'] for room in self.rooms
+            if room['occupants'] != []
+            }
+        result = ''
+        for name, people in allocations.items():
+            persons = ''
+            for person in people:
+                persons += person.upper() + ', '
+            # persons[:-2] to strip out the last comma
+            result += '\n{}\n'.format(name)+'-'*20+' \n{}\n'.format(persons[:-2])
+        return result
 
-    def print_unallocated():
+    def print_unallocated(self):
         """This function prints out the unallocated rooms"""
-        pass
+        allocated = set()
+        for room in self.rooms:
+            for person in room['occupants']:
+                allocated.add(person)
+        unallocated = [
+            person['name'].upper() for person in self.people
+            if person['name'] not in allocated
+        ]
+        result = '\nUNALLOCATED\n'+'-'*20
+        if unallocated == []:
+            result += '\nNONE, '
+        else:
+            for person in unallocated:
+                result += '\n{}\n'.format(person)+', '
+        return result[:-2]  # return minus the last comma
 
     def print_room(self, room_name):
         """This function prints the people in rooms contained in amity"""
@@ -245,7 +264,7 @@ class Amity:
             if num == []:
                 return 'no one has been assigned to {} yet'.format(room_name)
             else:
-                return num
+                return ', '.join(num)
         else:
             raise ValueError('no such room as {} in amity'.format(room_name))
 

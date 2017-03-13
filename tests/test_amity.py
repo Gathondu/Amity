@@ -193,18 +193,16 @@ class TestAmity(TestCase):
         with self.assertRaises(ValueError):
             self.a.reallocate_person('dan gathondu', 'dojo')
 
-    @skip("WIP")
     def test_people_are_loaded(self):
-        pass
+        self.a.load_people('people.txt')
+        self.assertTrue(self.a.person_exists('oluwafemi sule'))
 
-    @skip('WIP')
     def test_allocations_are_printed(self):
-        allocations = Amity.print_allocations()
+        allocations = self.a.print_allocations()
         self.assertIsNotNone(allocations)
 
-    @skip("WIP")
     def test_unallocations_are_printed(self):
-        unallocations = Amity.print_unallocated()
+        unallocations = self.a.print_unallocated()
         self.assertIsNotNone(unallocations)
 
     def test_print_room_prints_people_in_room(self):
@@ -213,17 +211,9 @@ class TestAmity(TestCase):
             if people['name'] == 'occulus'
             ][0]
         if num != 0:
-            self.assertEqual(num, len(self.a.print_room('occulus')))
+            self.assertEqual(num, len(self.a.print_room('occulus').split(',')))
         else:
-            self.assertEqual(39, len(self.a.print_room('occulus')))
-
-    @skip("WIP")
-    def test_state_is_saved_in_database(self):
-        pass
-
-    @skip('WIP')
-    def test_state_is_loaded(self):
-        pass
+            self.assertEqual(39, len(self.a.print_room('occulus').split(',')))
 
     def test_check_room_availability(self):
         num = [
@@ -238,9 +228,10 @@ class TestAmity(TestCase):
                          self.a.print_room('narnia'))
 
     def test_person_is_successfully_removed_from_room(self):
-        person = self.a.print_room('krypton')[0]
+        person = self.a.print_room('krypton')
+        person = person.split(',')[0].lower()
         if person != '':
-            remove = self.a.remove_person(person.lower(), 'krypton')
+            remove = self.a.remove_person(person, 'krypton')
             self.assertEqual(
                 '{} removed successfully from krypton'
                 .format(person.lower()), remove
@@ -262,9 +253,18 @@ class TestAmity(TestCase):
     def test_room_availability_is_updated_upon_removing_person(self):
         num = self.a.check_room_availability('dojo')
         if num != 4:
-            person = self.a.print_room('dojo')[0]
+            person = self.a.print_room('dojo')
+            person = person.split(',')[0].lower()
             remove = self.a.remove_person(person.lower(), 'dojo')
             if person != '':
                 self.assertEqual(
                     num + 1, self.a.check_room_availability('dojo')
                 )
+
+    @skip("WIP")
+    def test_state_is_saved_in_database(self):
+        pass
+
+    @skip('WIP')
+    def test_state_is_loaded(self):
+        pass
