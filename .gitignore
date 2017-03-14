@@ -11,3 +11,4 @@ design/
 *.db
 db.py
 !people.txt
+!requirements.txt
