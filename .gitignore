@@ -8,3 +8,5 @@ design/
 .coveragerc
 /.gtm/
 *.txt
+*.db
+db.py

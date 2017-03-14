@@ -1,6 +1,7 @@
 #!/usr/local/bin/python3
 # -*- coding: utf-8 -*-
 import random
+import sqlite3
 
 
 from model.person import Fellow, Staff
@@ -16,6 +17,7 @@ class Amity:
         self.rooms = []
         self.people = []
         self._results = []
+        self.conn = sqlite3.connect('amity.db')
 
     def room_exists(self, name):
         if self.rooms != []:
@@ -100,7 +102,7 @@ class Amity:
             if self.check_room_availability(self.rooms[ind]['name']):
                 self.rooms[ind]['occupants'].append(person['name'])
             else:
-                self.allocate_space(name)
+                self.allocate_space(person)
         else:
             rooms = [
                 room for room in self.rooms
@@ -111,7 +113,7 @@ class Amity:
             if self.check_room_availability(self.rooms[ind]['name']):
                 self.rooms[ind]['occupants'].append(person['name'])
             else:
-                self.allocate_space(name)
+                self.allocate_space(person)
 
             # if fellow wants living space assign them a living space too
             if livingSpace:
@@ -124,7 +126,7 @@ class Amity:
                 if self.check_room_availability(self.rooms[ind]['name']):
                     self.rooms[ind]['occupants'].append(person['name'])
                 else:
-                    self.allocate_space(name, True)
+                    self.allocate_space(person, True)
 
     def check_room_availability(self, room_name):
         """This function checks for the availability of rooms in amity"""
@@ -219,9 +221,10 @@ class Amity:
         with open(filename, 'r') as file:
             people = file.readlines()
         for line in people:
-            self.add_person(line[:-1])
+            if line != '':
+                self.add_person(line[:-1])
 
-    def print_allocations(self):
+    def print_allocations(self, filename=None):
         """This function prints out the allocated rooms"""
         allocations = {
             room['name'].upper(): room['occupants'] for room in self.rooms
@@ -233,10 +236,14 @@ class Amity:
             for person in people:
                 persons += person.upper() + ', '
             # persons[:-2] to strip out the last comma
-            result += '\n{}\n'.format(name)+'-'*20+' \n{}\n'.format(persons[:-2])
-        return result
+            result += '{}\n'.format(name)+'-'*20+' \n{}\n\n'.format(persons[:-2])
+        if filename is None:
+            return result
+        else:
+            with open(filename, 'w') as file:
+                file.writelines(result)
 
-    def print_unallocated(self):
+    def print_unallocated(self, filename=None):
         """This function prints out the unallocated rooms"""
         allocated = set()
         for room in self.rooms:
@@ -246,13 +253,17 @@ class Amity:
             person['name'].upper() for person in self.people
             if person['name'] not in allocated
         ]
-        result = '\nUNALLOCATED\n'+'-'*20
+        result = '\nUNALLOCATED\n'+'-'*20+'\n'
         if unallocated == []:
-            result += '\nNONE, '
+            result += 'NONE'
         else:
             for person in unallocated:
-                result += '\n{}\n'.format(person)+', '
-        return result[:-2]  # return minus the last comma
+                result += '{}\n'.format(person)
+        if filename is None:
+            return result
+        else:
+            with open(filename, 'w') as file:
+                file.writelines(result)
 
     def print_room(self, room_name):
         """This function prints the people in rooms contained in amity"""
@@ -278,7 +289,6 @@ class Amity:
         self._results = []  # clear the results argument
         for person in args:
             details = person.lower().split()
-
             # ensure that only 2 names are supplied, person type
             # and y for fellows.
             if len(details) > 4:
@@ -323,7 +333,6 @@ class Amity:
                                  ' Should be staff or fellow')
             else:
                 person_type = ''.join(person_type)
-
             if person_type == 'staff' and wants_livingspace in self.__true:
                 raise ValueError('staff cannot be assigned LivingSpace')
             if person_type == 'staff':
@@ -351,10 +360,18 @@ class Amity:
         else:
             return self._results[0]
 
-    def save_state():
+    def save_state(self):
         """This function saves the running state of amity to the database"""
-        pass
+        for person in self.people:
+            self.conn.execute('''
+            INSERT INTO people (name,type,wants_livingspace)
+            VALUES ({},{},{})
+            '''.format(
+                person['name'],
+                person['person_type'],
+                person['_wants_living_space'] if '_wants_living_space' in person.keys() else False
+            ))
 
-    def load_state():
+    def load_state(self):
         """This function loads amity resourses from the database"""
         pass
