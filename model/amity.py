@@ -92,12 +92,15 @@ class Amity:
 
     def allocate_space(self, person, livingSpace=False):
         """This function allocates space to new employees."""
-        if person['type'] == 'staff':
+        if person['type'].lower() == 'staff':
             rooms = [
                 room for room in self.rooms
                 if room['room_type'] == 'office'
                 ]
-            room = random.choice(rooms)
+            try:
+                room = random.choice(rooms)
+            except IndexError:
+                raise IndexError('no rooms in amity to allocate person')
             ind = self.rooms.index(room)
             if self.check_room_availability(self.rooms[ind]['name']):
                 self.rooms[ind]['occupants'].append(person['name'])
@@ -152,7 +155,8 @@ class Amity:
             if self.person_exists(name):
                 if name in room['occupants']:
                     self.rooms[ind]['occupants'].remove(name)
-                    return '{} removed successfully from {}'.format(name, room_name)
+                    return '{} removed successfully from {}'\
+                        .format(name, room_name)
                 else:
                     raise ValueError(
                         '{} is not assigned to {}'.format(name, room_name)
@@ -184,7 +188,8 @@ class Amity:
         # validate fellow who doesn't want living space isn't
         # allocated living space
         if person_validate[0]['person_type'] == 'fellow':
-            if typ == 'living space' and '_wants_living_space' not in person_validate[0].keys():
+            if typ == 'living space' and '_wants_living_space' not in\
+                        person_validate[0].keys():
                 raise ValueError(
                     'fellow {} cannot be allocated living space' +
                     ' as they opted out'.format(person)
@@ -230,13 +235,16 @@ class Amity:
             room['name'].upper(): room['occupants'] for room in self.rooms
             if room['occupants'] != []
             }
+        if allocations == {}:
+            return '\nALLOCATIONS\n'+'-'*20+'\n'+'NONE'
         result = ''
         for name, people in allocations.items():
             persons = ''
             for person in people:
                 persons += person.upper() + ', '
             # persons[:-2] to strip out the last comma
-            result += '{}\n'.format(name)+'-'*20+' \n{}\n\n'.format(persons[:-2])
+            result += '{}\n'.format(name)+'-'*20+' \n{}\n\n'\
+                .format(persons[:-2])
         if filename is None:
             return result
         else:
@@ -360,18 +368,25 @@ class Amity:
         else:
             return self._results[0]
 
-    def save_state(self):
+    def save_state(self, database=None):
         """This function saves the running state of amity to the database"""
         for person in self.people:
+            first_name = person['name'].split()[0]
+            last_name = person['name'].split()[1]
+            wants_livingspace = person['_wants_living_space']\
+                if '_wants_living_space' in person.keys() else False
             self.conn.execute('''
-            INSERT INTO people (name,type,wants_livingspace)
-            VALUES ({},{},{})
-            '''.format(
-                person['name'],
+            INSERT INTO people (first_name,last_name,type,wants_livingspace)
+            VALUES (?,?,?,?)
+            ''', (
+                first_name,
+                last_name,
                 person['person_type'],
-                person['_wants_living_space'] if '_wants_living_space' in person.keys() else False
+                wants_livingspace
             ))
+        self.conn.commit()
+        self.conn.close()
 
-    def load_state(self):
+    def load_state(self, database=None):
         """This function loads amity resourses from the database"""
         pass
