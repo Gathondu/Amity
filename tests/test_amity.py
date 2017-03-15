@@ -223,7 +223,8 @@ class TestAmity(TestCase):
     def test_person_is_successfully_removed_from_room(self):
         person = self.a.print_room('krypton')
         person = person.split(',')[0].lower()
-        if person != '' and person != 'no one has been assigned to krypton yet':
+        if person != '' and person !=\
+                     'no one has been assigned to krypton yet':
             remove = self.a.remove_person(person, 'krypton')
             self.assertEqual(
                 '{} removed successfully from krypton'

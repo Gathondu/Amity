@@ -99,7 +99,8 @@ class AmityApplication(cmd.Cmd):
 
     @docopt_cmd
     def do_add(self, arg):
-        '''Usage: add person <first_name> <last_name> <FELLOW|STAFF> [wants_accomodation]'''
+        '''Usage: add person <first_name> <last_name> <FELLOW|STAFF>
+        [wants_accomodation]'''
         try:
             name = arg['<first_name>'] + ' ' + arg['<last_name>']
             if arg['<FELLOW']:
@@ -117,7 +118,8 @@ class AmityApplication(cmd.Cmd):
 
     @docopt_cmd
     def do_allocate(self, arg):
-        '''Usage: allocate space <first_name> <last_name> <person_type> [wants_accomodation]'''
+        '''Usage: allocate space <first_name> <last_name> <person_type>
+        [wants_accomodation]'''
         try:
             person = arg['<first_name>'] + ' ' + arg['<last_name>']
             person = {
@@ -164,7 +166,8 @@ class AmityApplication(cmd.Cmd):
 
     @docopt_cmd
     def do_print(self, arg):
-        '''Usage: print room <room_name> | (allocations|unallocated) [--o=filename]'''
+        '''Usage: print room <room_name> | (allocations|unallocated)
+        [--o=filename]'''
         try:
             if arg['room']:
                 print(self.amity.print_room(arg['<room_name>']))
