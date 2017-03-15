@@ -6,3 +6,9 @@ design/
 .cache
 .coverage
 .coveragerc
+/.gtm/
+*.txt
+*.db
+db.py
+!people.txt
+!requirements.txt
