@@ -4,34 +4,29 @@
 
 class Room:
 
-    def __init__(self, name='Room Name', room_type='Room Type', max_space=0):
-        self._MAX_SPACE = max_space
-        self.name = name
-        self.room_type = room_type
+    max_space = None
+    name = None
+    room_type = None
+    occupants = []
 
-    def __str__(self):
-        return '{} {} can accomodate {} occupants.'.format(
-            self.room_type, self.name, self.max_space
-            )
-
-    @property
-    def max_space(self):
-        return self._MAX_SPACE
-
-    @max_space.setter
-    def _max_space(self, space):
-        if not isinstance(space, int):
-            raise ValueError('{} is not an integer!!!')
-        self._MAX_SPACE = space
+    def max_space_set(self, value):
+        if isinstance(value, int):
+            self.max_space = value
+        else:
+            raise ValueError('max space value can only be an integer')
 
 
 class Office(Room):
 
     def __init__(self, name):
-        super().__init__(name, room_type='office', max_space=6)
+        self.name = name
+        self.room_type = 'office'
+        self.max_space = 6
 
 
 class LivingSpace(Room):
 
     def __init__(self, name):
-        super().__init__(name, room_type='living space', max_space=4)
+        self.name = name
+        self.room_type = 'livingspace'
+        self.max_space = 4

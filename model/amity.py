@@ -1,255 +1,247 @@
 #!/usr/local/bin/python3
 # -*- coding: utf-8 -*-
 import random
-import sqlite3
 
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
 
 from model.person import Fellow, Staff
 from model.room import Office, LivingSpace
+from model.db import CreateDb, Person, Room
 
 
 class Amity:
-    __true = ('y', 'yes')
-    __person_type = ('staff', 'fellow')
-    __room_type = ('office', 'livingspace')
 
-    def __init__(self):
-        self.rooms = []
-        self.people = []
-        self._results = []
-        self.conn = sqlite3.connect('amity.db')
+    rooms = []
+    people = []
+
+    def __init__(self, database=None):
+        self.db = CreateDb(database)
+        self.session = self.db.Session()
 
     def room_exists(self, name):
-        if self.rooms != []:
+        if self.rooms:
             for room in self.rooms:
                 if name == room['name']:
-                    return True
+                    return room
         return False
 
-    def create_room(self, *args):
+    def create_room(self, room_type, room_name):
         """This function creates a new room in amity"""
-        self._results = []  # clear the results
-        if len(args) < 1:  # check that at least one room has been specified
-            raise ValueError('specify the name and type of class to create')
+        try:
+            if not isinstance(room_type, str) or not \
+                    isinstance(room_name, str):
+                raise ValueError('room name and type must be a string and ' +
+                                 'not an integer float.')
+            elif room_type.lower() not in ('livingspace', 'office'):
+                raise ValueError('Room type is incorrect. Must be office or ' +
+                                 'livingspace')
+            elif not room_name.isalpha():
+                raise ValueError('room name cannot be empty or have special ' +
+                                 'characters\n{} is not a valid name\n'
+                                 .format(room_name))
+            elif room_type == 'office':
+                return self.create_office(room_name)
+            elif room_type == 'livingspace':
+                return self.create_livingspace(room_name)
+        except ValueError:
+            raise
 
-        for room in args:
-            if not isinstance(room, str):
-                raise ValueError(
-                    'name must be a string and not an integer or float'
-                    )
-            details = room.lower().split()
-            # ensure that atleast the room type and name is given
-            if len(details) > 2:
-                raise ValueError(
-                    'give just the type and name of the room or' +
-                    'livingspace without spaces'
-                    )
-            elif len(details) < 2:
-                raise ValueError('give at least room type and name')
-
-            name = [name for name in details if name not in (self.__room_type)]
-            name = ' '.join(name)
-            room_type = [typ for typ in details if typ in self.__room_type]
-            # ensure room type is only specified once
-            if len(room_type) > 1:
-                raise ValueError(
-                    'room type specifed {} times'.format(len(room_type))
-                    )
-            elif len(room_type) < 1:
-                raise ValueError(
-                    'room type not specified. should be office or livingspace'
-                    )
-            else:
-                room_type = ''.join(room_type)
-
-            if room_type == 'office':
-                if self.room_exists(name):
-                    raise ValueError(
-                        'room with name {} already exists.'.format(name)
-                        )
-                else:
-                    office = Office(name)
-                    # add attribute to hold occupants
-                    office.__dict__['occupants'] = []
-                    self.rooms.append(office.__dict__)
-                    self._results.append('office {} created'.format(name))
-
-            if room_type == 'livingspace':
-                if self.room_exists(name):
-                    raise ValueError(
-                        'room with name {} already exists.'.format(name)
-                        )
-                else:
-                    ls = LivingSpace(name)
-                    # add attribute to hold occupants
-                    ls.__dict__['occupants'] = []
-                    self.rooms.append(ls.__dict__)
-                    self._results.append('livingspace {} created'.format(name))
-        if len(self._results) > 1:
-            return self._results
+    def create_livingspace(self, name):
+        """This function creates a new livingspace in amity"""
+        if self.room_exists(name):
+            raise ValueError('room with name {} already exists.'.format(name))
         else:
-            return self._results[0]
+            livingspace = LivingSpace(name)
+            self.rooms.append(livingspace.__dict__)
+            return 'livingspace {} created'.format(name)
 
-    def allocate_space(self, person, livingSpace=False):
-        """This function allocates space to new employees."""
-        if person['type'].lower() == 'staff':
-            rooms = [
-                room for room in self.rooms
-                if room['room_type'] == 'office'
-                ]
-            try:
-                room = random.choice(rooms)
-            except IndexError:
-                raise IndexError('no rooms in amity to allocate person')
-            ind = self.rooms.index(room)
-            if self.check_room_availability(self.rooms[ind]['name']):
-                self.rooms[ind]['occupants'].append(person['name'])
-            else:
-                self.allocate_space(person)
+    def create_office(self, name):
+        """This function creates a new office in amity"""
+        if self.room_exists(name):
+            raise ValueError('room with name {} already exists.'.format(name))
         else:
-            rooms = [
-                room for room in self.rooms
-                if room['room_type'] == 'office'
-                ]
+            office = Office(name)
+            self.rooms.append(office.__dict__)
+            return 'office {} created'.format(name)
+
+    def allocate_person(self, person_name):
+        person = self.person_exists(person_name)
+        try:
+            if person:
+                room = [room for room in self.rooms if
+                        person_name in room['occupants']]
+                if room:
+                    raise ValueError(
+                        '{} already allocated'.format(person_name))
+                if person['person_type'] == 'staff':
+                    return self.allocate_staff(person_name)
+                if 'wants_livingspace' in person.keys():
+                    return self.allocate_fellow(person_name, True)
+                return self.allocate_fellow(person_name)
+            else:
+                raise ValueError("person {} doesn't exist".format(person_name))
+        except ValueError:
+            raise
+
+    def allocate_fellow(self, name, livingspace=None):
+        """This function allocates space to new fellows."""
+        try:
+            rooms = self.get_room(room_type='office')
             room = random.choice(rooms)
-            ind = self.rooms.index(room)
-            if self.check_room_availability(self.rooms[ind]['name']):
-                self.rooms[ind]['occupants'].append(person['name'])
+            result = ''
+            if self.check_room_availability(room['name']):
+                room['occupants'].append(name)
+                result += ('fellow {} allocated space in office {}'
+                           .format(name, room['name']))
             else:
-                self.allocate_space(person)
-
-            # if fellow wants living space assign them a living space too
-            if livingSpace:
-                rooms = [
-                    room for room in self.rooms
-                    if room['room_type'] == 'living space'
-                    ]
+                self.allocate_fellow(name, livingspace)
+            # if fellow wants livingspace assign them a livingspace too
+            if livingspace:
+                rooms = self.get_room(room_type='livingspace')
                 room = random.choice(rooms)
-                ind = self.rooms.index(room)
-                if self.check_room_availability(self.rooms[ind]['name']):
-                    self.rooms[ind]['occupants'].append(person['name'])
+                if self.check_room_availability(room['name']):
+                    room['occupants'].append(name)
+                    result += ('\nfellow {} allocated space in livingspace {}'
+                               .format(name, room['name']))
                 else:
-                    self.allocate_space(person, True)
+                    self.allocate_fellow(name, livingspace)
+            return result
+        except IndexError:
+            return 'No rooms in amity to allocate person'
+
+    def allocate_staff(self, name):
+        """This function allocates space to new staff."""
+        try:
+            rooms = self.get_room(room_type='office')
+            room = random.choice(rooms)
+            if self.check_room_availability(room['name']):
+                room['occupants'].append(name)
+                return ('staff {} allocated space in office {}'
+                        .format(name, room['name']))
+            else:
+                self.allocate_staff(name)
+        except IndexError:
+            return 'No rooms in amity to allocate person'
+
+    def get_room(self, room_type=None, room_name=None):
+        """This function gets a list of specific rooms in amity"""
+        if room_name:
+            return [room for room in self.rooms if room['name'] ==
+                    room_name][0]
+        elif room_type:
+            return [room for room in self.rooms if
+                    room['room_type'] == room_type]
+        return None
 
     def check_room_availability(self, room_name):
         """This function checks for the availability of rooms in amity"""
-        return [
-            room['_MAX_SPACE'] - len(room['occupants'])
-            for room in self.rooms
-            if room['name'] == room_name
-        ][0]
+        room = self.get_room(room_name=room_name)
+        return room['_MAX_SPACE'] - len(room['occupants'])
 
     def person_exists(self, name):
-        if self.people != []:
+        """This function checks if a person exists in amity"""
+        if self.people:
             for person in self.people:
                 if name == person['name']:
-                    return True
+                    return person
         return False
 
-    def remove_person(self, name, room_name):
-        if self.room_exists(room_name):
-            room = [
-                room for room in self.rooms if room['name'] == room_name
-            ][0]
-            ind = self.rooms.index(room)
-            if self.person_exists(name):
-                if name in room['occupants']:
-                    self.rooms[ind]['occupants'].remove(name)
-                    return '{} removed successfully from {}'\
-                        .format(name, room_name)
-                else:
-                    raise ValueError(
-                        '{} is not assigned to {}'.format(name, room_name)
-                    )
-            else:
-                raise ValueError("person {} doesn't exist.".format(name))
+    def remove_person_from_room(self, person_name):
+        rooms = [room for room in self.rooms if
+                 person_name in room['occupants']]
+        if rooms:
+            for room in rooms:
+                room['occupants'].remove(person_name)
+                print('{} removed successfully from {}'
+                      .format(person_name, room['name']))
         else:
-            raise ValueError("room {} doesn't exist".format(room_name))
+            print("{} doesn't have allocations".format(person_name))
 
-    def reallocate_person(self, person, room_name):
+    def remove_person(self, name):
+        try:
+            if self.person_exists(name):
+                self.people.remove(self.person_exists(name))
+                self.remove_person_from_room(name)
+                return 'person {} removed'.format(name)
+            else:
+                raise ValueError("person {} doesn't exist".format(name))
+        except ValueError:
+            raise
+
+    def reallocate_person(self, person_name, room_name):
         """This function reallocates an employee from one room to another"""
-        typ = [
-            room['room_type'] for room in self.rooms
-            if room['name'] == room_name
-        ]
-        if typ == []:  # check if the room exists
-            raise ValueError('no such room as {}'.format(room_name))
-        typ = typ[0]  # index 0 to return the string and not the list
-        person_validate = [p for p in self.people if p['name'] == person]
-        # check if that person exists
-        if person_validate == []:
-            raise ValueError("person {} doesn't exsist".format(person))
-        # validate staff isn't allocated to living space
-        if person_validate[0]['person_type'] == 'staff':
-            if typ == 'living space':
-                raise ValueError(
-                    'staff {} cannot be allocated living space'.format(person)
-                    )
-        # validate fellow who doesn't want living space isn't
-        # allocated living space
-        if person_validate[0]['person_type'] == 'fellow':
-            if typ == 'living space' and '_wants_living_space' not in\
-                        person_validate[0].keys():
-                raise ValueError(
-                    'fellow {} cannot be allocated living space' +
-                    ' as they opted out'.format(person)
-                    )
-        room = [
-            room for room in self.rooms if person in room['occupants'] and
-            room['room_type'] == typ
-        ]
+        try:
+            if self.room_exists(room_name=room_name):
+                room = self.get_room(room_name=room_name)
+                # index 0 to return the string and not the list
+                room_type = room['room_type']
+            else:
+                raise ValueError("room {} doesn't exist".format(room_name))
+            # check if that person exists
+            person = self.person_exists(person_name)
+            if not person:
+                raise ValueError("person {} doesn't exist".format(person))
+            # validate staff isn't allocated to livingspace
+            elif (person['person_type'] == 'staff' and
+                    room_type == 'livingspace'):
+                raise ValueError('staff {} cannot be allocated livingspace'
+                                 .format(person_name))
+            # validate fellow who doesn't want livingspace isn't
+            # allocated livingspace
+            elif (person['person_type'] == 'fellow'and
+                    room_type == 'livingspace' and '_wants_living_space' not in
+                    person.keys()):
+                raise ValueError('fellow {} cannot be '.format(person_name) +
+                                 'allocated livingspace as they opted out')
+            else:
+                return self.reallocate(person['name'], room_type, room_name)
+        except ValueError:
+            raise
+
+    def reallocate(self, person_name, room_type, room_name):
+        room = [room for room in self.rooms if person_name in
+                room['occupants'] and room['room_type'] == room_type]
+        if not room:
+            raise ValueError('allocate {} first'.format(person_name))
         room = room[0]
-        if room['name'] == room_name:  # check if reallocating to same room
-            raise ValueError(
-                '{} is already allocated to {} {}'
-                .format(person, typ, room_name))
-        # index 0 to return the dictionary and not the list
-        ind = self.rooms.index(room)
-        new_room = [
-            room for room in self.rooms if room['name'] == room_name and
-            room['room_type'] == typ
-        ][0]
-        new_ind = self.rooms.index(new_room)
+        # check if reallocating to same room
+        if room['name'] == room_name:
+            raise ValueError('{} is already allocated to {} {}'
+                             .format(person_name, room_type, room_name))
         if self.check_room_availability(room_name):
-            self.rooms[new_ind]['occupants'].append(person)
-            self.rooms[ind]['occupants'].remove(person)
-            return '{} reallocated to {} {}'.format(person, typ, room_name)
+            self.get_room(room_name=room_name)['occupants'].append(person_name)
+            room['occupants'].remove(person_name)
+            return('{} reallocated to {} {}'
+                   .format(person_name, room_type, room_name))
         else:
-            raise ValueError(
-                '{} {} has maximum number of occupants'.
-                format(self.rooms[new_ind]['room_type'],
-                       self.rooms[new_ind]['name'])
-                )
+            raise ValueError('{} {} has maximum number of occupants'
+                             .format(room_type, room_name))
 
     def load_people(self, filename):
         """This function loads employees from a txt file."""
         with open(filename, 'r') as file:
-            people = file.readlines()
-        for line in people:
-            if line != '':
-                self.add_person(line[:-1])
+            for line in file.readlines():
+                print(self.add_person(line[:-1]))
 
     def print_allocations(self, filename=None):
         """This function prints out the allocated rooms"""
-        allocations = {
-            room['name'].upper(): room['occupants'] for room in self.rooms
-            if room['occupants'] != []
-            }
-        if allocations == {}:
-            return '\nALLOCATIONS\n'+'-'*20+'\n'+'NONE'
+        allocations = {room['name']: room['occupants'] for room in self.rooms
+                       if room['occupants']}
         result = ''
+        if not allocations:
+            return '\nALLOCATIONS\n'+'-'*20+'\n'+'NONE'
         for name, people in allocations.items():
             persons = ''
             for person in people:
                 persons += person.upper() + ', '
             # persons[:-2] to strip out the last comma
-            result += '{}\n'.format(name)+'-'*20+' \n{}\n\n'\
+            result += '{}\n'.format(name.upper())+'-'*20+' \n{}\n\n'\
                 .format(persons[:-2])
-        if filename is None:
+        if not filename:
             return result
-        else:
-            with open(filename, 'w') as file:
-                file.writelines(result)
+        with open(filename, 'w') as file:
+            file.writelines(result)
 
     def print_unallocated(self, filename=None):
         """This function prints out the unallocated rooms"""
@@ -257,135 +249,101 @@ class Amity:
         for room in self.rooms:
             for person in room['occupants']:
                 allocated.add(person)
-        unallocated = [
-            person['name'].upper() for person in self.people
-            if person['name'] not in allocated
-        ]
+        unallocated = [person['name'] for person in self.people
+                       if person['name'] not in allocated]
         result = '\nUNALLOCATED\n'+'-'*20+'\n'
-        if unallocated == []:
+        if not unallocated:
             result += 'NONE'
         else:
             for person in unallocated:
-                result += '{}\n'.format(person)
-        if filename is None:
+                result += '{}\n'.format(person.upper())
+        if not filename:
             return result
-        else:
-            with open(filename, 'w') as file:
-                file.writelines(result)
+        with open(filename, 'w') as file:
+            file.writelines(result)
 
     def print_room(self, room_name):
         """This function prints the people in rooms contained in amity"""
-        if room_name in [room['name'] for room in self.rooms]:
-            num = [
-                [people.upper() for people in room['occupants']]
-                for room in self.rooms if room['name'] == room_name
-            ][0]
-            if num == []:
-                return 'no one has been assigned to {} yet'.format(room_name)
-            else:
-                return ', '.join(num)
-        else:
+        try:
+            if self.room_exists(room_name):
+                people = [[people.upper() for people in room['occupants']]
+                          for room in self.rooms if room['name'] == room_name
+                          ][0]
+                if not people:
+                    raise ValueError('no one has been assigned to {} yet'
+                                     .format(room_name))
+                else:
+                    return ', '.join(num)
             raise ValueError('no such room as {} in amity'.format(room_name))
+        except ValueError:
+            raise
 
-    def add_person(self, *args):
+    def add_person(self, role, person_name, wants_livingspace=False):
         """This function employs  a new new person as  a staff or fellow."""
-        if len(args) < 1:  # check that at least one person has been specified
-            raise ValueError('please specify name, type of person and' +
-                             ' if person wants living space in case of fellows'
-                             )
-
-        self._results = []  # clear the results argument
-        for person in args:
-            details = person.lower().split()
-            # ensure that only 2 names are supplied, person type
-            # and y for fellows.
-            if len(details) > 4:
-                raise ValueError('give just two names, type of person and' +
-                                 ' y if its a fellow who wants accomodation')
-            elif len(details) < 3:
-                raise ValueError(
-                    'give at least two names and the type of person'
-                    )
-
-            name = [name for name in details if name not in
-                    (self.__person_type + self.__true)]
-            # ensure that name contains only alphabetic chars
-            if ''.join(name).isalpha():
-                name = ' '.join(name)
+        try:
+            if role.lower() not in ('staff', 'fellow'):
+                raise ValueError('Person role is incorrect. Should be ' +
+                                 'fellow or staff')
+            elif self.person_exists(person_name):
+                raise ValueError('person {} already exists.'
+                                 .format(person_name))
             else:
-                raise ValueError('name must be alphabetic chars.' +
-                                 ' {} is incorrect'.format(' '.join(name)))
+                role = role.lower()
+                person_name = person_name.lower()
+                # ensure that name contains only alphabetic chars
+                if not ''.join(person_name.split()).isalpha():
+                    raise ValueError('name must be alphabetic chars. {} ' +
+                                     'is incorrect'
+                                     .format(' '.join(person_name)))
+                elif role == 'staff' and wants_livingspace:
+                    raise ValueError('staff cannot be assigned LivingSpace')
+                elif role == 'staff':
+                    self.add_staff(person_name)
+                    return '{} {} added.'.format(role, person_name)
+                elif role == 'fellow':
+                    self.add_fellow(person_name, wants_livingspace)
+                    return '{} {} added.'.format(role, person_name)
+        except ValueError:
+            raise
 
-            wants_livingspace = [space for space in details if space
-                                 in self.__true]
-            # ensure that only one value for the fellow wanting living space
-            # has been provided
-            if len(wants_livingspace) == 1:
-                wants_livingspace = ''.join(wants_livingspace)
-            elif len(wants_livingspace) > 1:
-                raise ValueError(
-                    'only specify once if fellow wants living space'
-                    )
-            else:
-                wants_livingspace = ''
-
-            person_type = [typ for typ in details if typ in
-                           (self.__person_type)]
-            # ensure that the person type is only specified once
-            if len(person_type) > 1:
-                raise ValueError(
-                    'person type specified {} times'.format(len(person_type))
-                    )
-            elif len(person_type) < 1:
-                raise ValueError('person type not specified.' +
-                                 ' Should be staff or fellow')
-            else:
-                person_type = ''.join(person_type)
-            if person_type == 'staff' and wants_livingspace in self.__true:
-                raise ValueError('staff cannot be assigned LivingSpace')
-            if person_type == 'staff':
-                if self.person_exists(name):
-                    raise ValueError('person {} already exsists.'.format(name))
-                else:
-                    self.people.append(Staff(name).__dict__)
-                    self.allocate_space({'name': name, 'type': 'staff'})
-                    self._results.append('staff {} added'.format(name))
-            if person_type == 'fellow':
-                if self.person_exists(name):
-                    raise ValueError('person {} already exsists.'.format(name))
-                else:
-                    if wants_livingspace in self.__true:
-                        self.people.append(Fellow(name, True).__dict__)
-                        self.allocate_space(
-                            {'name': name, 'type': 'fellow'}, True
-                            )
-                    else:
-                        self.people.append(Fellow(name).__dict__)
-                        self.allocate_space({'name': name, 'type': 'fellow'})
-                    self._results.append('fellow {} added'.format(name))
-        if len(self._results) > 1:
-            return self._results
+    def add_fellow(self, person_name, wants_livingspace):
+        if wants_livingspace:
+            self.people.append(Fellow(person_name, True).__dict__)
+            print(self.allocate_fellow(person_name, True))
         else:
-            return self._results[0]
+            self.people.append(Fellow(person_name).__dict__)
+            print(self.allocate_fellow(person_name))
+
+    def add_staff(self, person_name):
+        self.people.append(Staff(person_name).__dict__)
+        print(self.allocate_staff(person_name))
 
     def save_state(self, database=None):
         """This function saves the running state of amity to the database"""
         for person in self.people:
             first_name = person['name'].split()[0]
             last_name = person['name'].split()[1]
-            wants_livingspace = person['_wants_living_space']\
-                if '_wants_living_space' in person.keys() else False
-            self.conn.execute('''
-            INSERT INTO people (first_name,last_name,type,wants_livingspace)
-            VALUES (?,?,?,?)
-            ''', (
-                first_name,
-                last_name,
-                person['person_type'],
-                wants_livingspace
-            ))
-        self.conn.commit()
-        self.conn.close()
+            wants_livingspace = person['_wants_living_space'] if\
+                '_wants_living_space' in person.keys() else False
+            person_to_save = Person(
+                first_name=first_name,
+                last_name=last_name,
+                role=person['person_type'],
+                wants_livingspace=wants_livingspace
+            )
+            self.session.add(person_to_save)
+
+            for room in self.rooms:
+                room_to_save = Room(
+                    name=room['name'],
+                    type=room['room_type'],
+                    max_space=room['_MAX_SPACE'],
+                    occupants=room['occupants']
+                )
+                self.session.add(room_to_save)
+
+        self.session.commit()
+        return 'amity state saved successfully'
 
     def load_state(self, database=None):
         """This function loads amity resourses from the database"""

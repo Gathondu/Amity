@@ -30,9 +30,10 @@ import cmd
 import os
 
 from docopt import docopt, DocoptExit
-from model.amity import Amity
 from termcolor import cprint, colored
 from pyfiglet import figlet_format
+
+from model.amity import Amity
 
 
 def docopt_cmd(func):
@@ -69,7 +70,7 @@ def introduction():
 
 
 class AmityApplication(cmd.Cmd):
-    cprint(figlet_format('AMITY', font='banner3-D'), 'cyan', attrs=['bold'])
+    cprint(figlet_format('DNG', font='banner3-D'), 'cyan', attrs=['bold'])
     prompt = "Amity -->"
     amity = Amity()
 
@@ -99,9 +100,10 @@ class AmityApplication(cmd.Cmd):
 
     @docopt_cmd
     def do_add(self, arg):
-        '''Usage: add person <first_name> <last_name> <FELLOW|STAFF>
-        [wants_accomodation]'''
+        '''Usage: add person <first_name> <last_name> <FELLOW|STAFF> [wants_accomodation]'''
         try:
+            if not arg['<first_name>']:
+                raise ValueError('nothing specified')
             name = arg['<first_name>'] + ' ' + arg['<last_name>']
             if arg['<FELLOW']:
                 typ = arg['<FELLOW']
@@ -118,9 +120,10 @@ class AmityApplication(cmd.Cmd):
 
     @docopt_cmd
     def do_allocate(self, arg):
-        '''Usage: allocate space <first_name> <last_name> <person_type>
-        [wants_accomodation]'''
+        '''Usage: allocate space <first_name> <last_name> <person_type> [wants_accomodation]'''
         try:
+            if not arg['<first_name>']:
+                raise ValueError('nothing specified')
             person = arg['<first_name>'] + ' ' + arg['<last_name>']
             person = {
                 'name': person,
