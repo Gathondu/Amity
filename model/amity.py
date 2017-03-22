@@ -32,7 +32,7 @@ class Amity:
             if not isinstance(room_type, str) or not \
                     isinstance(room_name, str):
                 raise ValueError('room name and type must be a string and ' +
-                                 'not an integer float.')
+                                 'not an integer or float.')
             elif room_type.lower() not in ('livingspace', 'office'):
                 raise ValueError('Room type is incorrect. Must be office or ' +
                                  'livingspace')
@@ -136,8 +136,11 @@ class Amity:
 
     def check_room_availability(self, room_name):
         """This function checks for the availability of rooms in amity"""
-        room = self.get_room(room_name=room_name)
-        return room['_MAX_SPACE'] - len(room['occupants'])
+        if self.room_exists(room_name):
+            room = self.get_room(room_name=room_name)
+            return room['max_space'] - len(room['occupants'])
+        else:
+            return "room {} doesn't exist".format(room_name)
 
     def person_exists(self, name):
         """This function checks if a person exists in amity"""
@@ -172,7 +175,7 @@ class Amity:
     def reallocate_person(self, person_name, room_name):
         """This function reallocates an employee from one room to another"""
         try:
-            if self.room_exists(room_name=room_name):
+            if self.room_exists(room_name):
                 room = self.get_room(room_name=room_name)
                 # index 0 to return the string and not the list
                 room_type = room['room_type']
@@ -190,7 +193,7 @@ class Amity:
             # validate fellow who doesn't want livingspace isn't
             # allocated livingspace
             elif (person['person_type'] == 'fellow'and
-                    room_type == 'livingspace' and '_wants_living_space' not in
+                    room_type == 'livingspace' and 'wants_livingspace' not in
                     person.keys()):
                 raise ValueError('fellow {} cannot be '.format(person_name) +
                                  'allocated livingspace as they opted out')
@@ -207,22 +210,39 @@ class Amity:
         room = room[0]
         # check if reallocating to same room
         if room['name'] == room_name:
-            raise ValueError('{} is already allocated to {} {}'
-                             .format(person_name, room_type, room_name))
+            raise ValueError(
+                '{} is already allocated to {} {}'.format(
+                    person_name, room_type, room_name))
         if self.check_room_availability(room_name):
             self.get_room(room_name=room_name)['occupants'].append(person_name)
             room['occupants'].remove(person_name)
             return('{} reallocated to {} {}'
                    .format(person_name, room_type, room_name))
         else:
-            raise ValueError('{} {} has maximum number of occupants'
-                             .format(room_type, room_name))
+            raise ValueError(
+                '{} {} has maximum number of occupants'.format(
+                    room_type, room_name))
 
     def load_people(self, filename):
         """This function loads employees from a txt file."""
         with open(filename, 'r') as file:
-            for line in file.readlines():
-                print(self.add_person(line[:-1]))
+            lines = list(line for line in (l.rstrip() for l in file)if line)
+            for line in lines:
+                line = line.lower().split()
+                name = ' '.join([
+                    name for name in line if name not in
+                    ('fellow', 'staff', 'y', 'yes')])
+                role = ' '.join([
+                    role for role in line if role in ('staff', 'fellow')])
+                want_livingspace = [
+                    space for space in line if space in ('y', 'yes')]
+                try:
+                    if want_livingspace:
+                        print(self.add_person(role, name, True))
+                    else:
+                        print(self.add_person(role, name))
+                except ValueError as e:
+                    print(e)
 
     def print_allocations(self, filename=None):
         """This function prints out the allocated rooms"""
@@ -230,7 +250,7 @@ class Amity:
                        if room['occupants']}
         result = ''
         if not allocations:
-            return '\nALLOCATIONS\n'+'-'*20+'\n'+'NONE'
+            result = '\nALLOCATIONS\n'+'-'*20+'\n'+'NONE'
         for name, people in allocations.items():
             persons = ''
             for person in people:
@@ -242,6 +262,7 @@ class Amity:
             return result
         with open(filename, 'w') as file:
             file.writelines(result)
+        return 'Allocations haved been saved to file {}'.format(filename)
 
     def print_unallocated(self, filename=None):
         """This function prints out the unallocated rooms"""
@@ -261,6 +282,7 @@ class Amity:
             return result
         with open(filename, 'w') as file:
             file.writelines(result)
+        return 'Unallocations haved been saved to file {}'.format(filename)
 
     def print_room(self, room_name):
         """This function prints the people in rooms contained in amity"""
@@ -270,10 +292,10 @@ class Amity:
                           for room in self.rooms if room['name'] == room_name
                           ][0]
                 if not people:
-                    raise ValueError('no one has been assigned to {} yet'
-                                     .format(room_name))
+                    raise ValueError(
+                        'no one has been assigned to {} yet'.format(room_name))
                 else:
-                    return ', '.join(num)
+                    return ', '.join(people)
             raise ValueError('no such room as {} in amity'.format(room_name))
         except ValueError:
             raise
@@ -282,19 +304,19 @@ class Amity:
         """This function employs  a new new person as  a staff or fellow."""
         try:
             if role.lower() not in ('staff', 'fellow'):
-                raise ValueError('Person role is incorrect. Should be ' +
-                                 'fellow or staff')
+                raise ValueError(
+                    'Person role is incorrect. Should be fellow or staff')
             elif self.person_exists(person_name):
-                raise ValueError('person {} already exists.'
-                                 .format(person_name))
+                raise ValueError(
+                    'person {} already exists.'.format(person_name))
             else:
                 role = role.lower()
                 person_name = person_name.lower()
                 # ensure that name contains only alphabetic chars
                 if not ''.join(person_name.split()).isalpha():
-                    raise ValueError('name must be alphabetic chars. {} ' +
-                                     'is incorrect'
-                                     .format(' '.join(person_name)))
+                    raise ValueError(
+                        'name must be alphabetic chars. {} is incorrect'.format(
+                            person_name))
                 elif role == 'staff' and wants_livingspace:
                     raise ValueError('staff cannot be assigned LivingSpace')
                 elif role == 'staff':
@@ -323,8 +345,8 @@ class Amity:
         for person in self.people:
             first_name = person['name'].split()[0]
             last_name = person['name'].split()[1]
-            wants_livingspace = person['_wants_living_space'] if\
-                '_wants_living_space' in person.keys() else False
+            wants_livingspace = person['wants_livingspace'] if\
+                'wants_livingspace' in person.keys() else False
             person_to_save = Person(
                 first_name=first_name,
                 last_name=last_name,
