@@ -112,15 +112,10 @@ class AmityApplication(cmd.Cmd):
         '''Usage: add person <first_name> <last_name> (<FELLOW>|<STAFF>)
          [<wants_accomodation>]'''
         try:
-            if not arg['<first_name>']:
-                raise ValueError('both names must be specifed specified')
-            if arg['<last_name>'].lower() in ('fellow', 'staff'):
-                raise ValueError('both names must be specifed specified')
             name = arg['<first_name>'] + ' ' + arg['<last_name>']
-            if arg['<FELLOW>']:
-                role = arg['<FELLOW>']
-            if arg['<STAFF>']:
-                role = arg['<STAFF>']
+            role = arg['<FELLOW>'] or arg['<STAFF>']
+            if role.lower() not in ('fellow', 'staff'):
+                raise ValueError('both names must be specifed specified')
             if arg['<wants_accomodation>']:
                 accomodation = arg['<wants_accomodation>'].lower()
                 if accomodation in ('y', 'yes'):

@@ -9,7 +9,6 @@ design/
 /.gtm/
 *.txt
 *.db
-db.py
 !people.txt
 !requirements.txt
 *.sqlite

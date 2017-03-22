@@ -7,7 +7,7 @@ from sqlalchemy.orm import sessionmaker
 
 from model.person import Fellow, Staff
 from model.room import Office, LivingSpace
-from model.db import CreateDb, Person, Room
+from model.db import CreateDb, Person, Room, Base
 
 
 class Amity:
@@ -16,6 +16,10 @@ class Amity:
     people = []
 
     def __init__(self, database=None):
+        self.initialize_database(database)
+
+    def initialize_database(self, database=None):
+        self.database = database
         self.db = CreateDb(database)
         self.session = self.db.Session()
 
@@ -342,9 +346,36 @@ class Amity:
 
     def save_state(self, database=None):
         """This function saves the running state of amity to the database"""
+        self.db.clear()
+        self.initialize_database(self.database)
+        self.save_people_to_db()
+        self.save_rooms_to_db()
+        self.save_to_db()
+        return 'amity state saved successfully'
+
+    def save_rooms_to_db(self):
+        for room in self.rooms:
+            people = []
+            for occupant in room['occupants']:
+                occupant = occupant.split()
+                person = self.session.query(Person).filter_by(
+                    first_name=occupant[0],
+                    last_name=occupant[1]
+                    ).first()
+                people.append(person)
+            room_to_save = Room(
+                name=room['name'],
+                type=room['room_type'],
+                max_space=room['max_space'],
+                occupants=people
+            )
+            self.session.add(room_to_save)
+
+    def save_people_to_db(self):
         for person in self.people:
-            first_name = person['name'].split()[0]
-            last_name = person['name'].split()[1]
+            person_name = person['name'].split()
+            first_name = person_name[0]
+            last_name = person_name[1]
             wants_livingspace = person['wants_livingspace'] if\
                 'wants_livingspace' in person.keys() else False
             person_to_save = Person(
@@ -355,18 +386,49 @@ class Amity:
             )
             self.session.add(person_to_save)
 
-            for room in self.rooms:
-                room_to_save = Room(
-                    name=room['name'],
-                    type=room['room_type'],
-                    max_space=room['_MAX_SPACE'],
-                    occupants=room['occupants']
-                )
-                self.session.add(room_to_save)
-
+    def save_to_db(self):
         self.session.commit()
-        return 'amity state saved successfully'
+        self.session.close()
 
     def load_state(self, database=None):
         """This function loads amity resourses from the database"""
-        pass
+        self.initialize_database(database)
+        amity_rooms = self.session.query(Room).all()
+        print(self.load_room_db(amity_rooms))
+        people = self.session.query(Person).all()
+        print(self.load_people_db(people))
+
+    def load_room_db(self, amity_rooms):
+        for room in amity_rooms:
+            room_dict = {
+                'name': room.name,
+                'room_type': room.type,
+                'max_space': room.max_space,
+                'occupants': []
+            }
+            self.rooms.append(room_dict)
+        return 'Rooms loaded from db'
+
+    def load_people_db(self, people):
+        for person in people:
+            if person.wants_livingspace:
+                person_dict = {
+                    'name': person.first_name + ' ' + person.last_name,
+                    'person_type': person.role,
+                    'wants_livingspace': True
+                }
+            else:
+                person_dict = {
+                    'name': person.first_name + ' ' + person.last_name,
+                    'person_type': person.role
+                }
+            self.people.append(person_dict)
+            self.load_person_to_rooms(person)
+        return 'People loaded from db'
+
+    def load_person_to_rooms(self, person):
+        person_name = person.first_name + ' ' + person.last_name
+        for room in person.room:
+            for r in self.rooms:
+                if r['name'] == room.name:
+                    r['occupants'].append(person_name)
