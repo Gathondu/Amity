@@ -12,3 +12,5 @@ design/
 db.py
 !people.txt
 !requirements.txt
+*.sqlite
+.vscode/

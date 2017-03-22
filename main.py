@@ -4,12 +4,12 @@
 '''
 Usage:
     create room <room_type> <room_name> ...
-    check (room_exists|room_availability|person_exist) <name>
-    add person <first_name> <last_name> <FELLOW|STAFF> [wants_accomodation]
-    allocate space <first_name> <last_name> <person_type> [wants_accomodation]
+    check (rooms|room_availability|person_exist) <name>
+    add person <first_name> <last_name> <FELLOW>|<STAFF> [<wants_accomodation>]
+    allocate space <first_name> <last_name>
     reallocate person <first_name> <last_name> <new_room_name>
-    remove person <first_name> <last_name> <room_name>
-    load (people|state) <filename|database>
+    remove person <first_name> <last_name> [-r]
+    load (people|state) <filename>|<database>
     print room <room_name> | (allocations|unallocated) [--o=filename]
     save state [--db=database]
     quit
@@ -19,9 +19,10 @@ Arguments:
     wants_accomodation  Specify if person(only fellow) wants living space
 
 Options:
-    -h, --help                          : Show this help messsage
-    -o=filename, --option filename      : Specify file
-    --db                                : Specify database
+    -h, --help           : Show this help messsage
+    -r                   : Specify person to be removed from room and not amity
+    --o=filename         : Specify filename to save or read from
+    --db=database        : Specify database to save or read from
 '''
 
 
@@ -30,9 +31,10 @@ import cmd
 import os
 
 from docopt import docopt, DocoptExit
-from model.amity import Amity
 from termcolor import cprint, colored
 from pyfiglet import figlet_format
+
+from model.amity import Amity
 
 
 def docopt_cmd(func):
@@ -76,60 +78,66 @@ class AmityApplication(cmd.Cmd):
     @docopt_cmd
     def do_create(self, arg):
         '''Usage: create room <room_type> <room_name> ...'''
-        try:
-            name = arg['<room_name>']
-            room_type = arg['<room_type>']
-            print(self.amity.create_room(room_type+' '+name[0]))
-        except Exception as e:
-            print(e)
+        name = arg['<room_name>']
+        room_type = arg['<room_type>']
+        for room in name:
+            try:
+                print(self.amity.create_room(room_type, room))
+            except Exception as e:
+                print(e)
 
     @docopt_cmd
     def do_check(self, arg):
-        '''Usage: check (room_exists|room_availability|person_exist) <name>'''
+        '''Usage: check room_type <type> | (room_availability |person) <name>...'''
         try:
-            name = arg['<name>']
-            if arg['room_exists']:
-                print(self.amity.room_exists(name))
+            name = ' '.join(arg['<name>'])
+            if arg['room_type']:
+                rooms = self.amity.get_room(room_type=arg['<type>'])
+                result = ''
+                for room in rooms:
+                    result += room['name'].upper() + ', '
+                print(result[:-2])
             elif arg['room_availability']:
                 print(self.amity.check_room_availability(name))
-            elif arg['person_exist']:
-                print(self.amity.person_exists(name))
+            elif arg['person']:
+                if self.amity.person_exists(name):
+                    print('{} exists'.format(name))
+                else:
+                    print("{} doesn't exist".format(name))
         except Exception as e:
             print(e)
 
     @docopt_cmd
     def do_add(self, arg):
-        '''Usage: add person <first_name> <last_name> <FELLOW|STAFF>
-        [wants_accomodation]'''
+        '''Usage: add person <first_name> <last_name> (<FELLOW>|<STAFF>)
+         [<wants_accomodation>]'''
         try:
+            if not arg['<first_name>']:
+                raise ValueError('both names must be specifed specified')
+            if arg['<last_name>'].lower() in ('fellow', 'staff'):
+                raise ValueError('both names must be specifed specified')
             name = arg['<first_name>'] + ' ' + arg['<last_name>']
-            if arg['<FELLOW']:
-                typ = arg['<FELLOW']
-            if arg['STAFF>']:
-                typ = arg['STAFF>']
-            person = name + ' ' + typ
-            if arg['wants_accomodation']:
-                acc = arg['wants_accomodation']
-                print(self.amity.add_person(person+' '+acc))
+            if arg['<FELLOW>']:
+                role = arg['<FELLOW>']
+            if arg['<STAFF>']:
+                role = arg['<STAFF>']
+            if arg['<wants_accomodation>']:
+                accomodation = arg['<wants_accomodation>'].lower()
+                if accomodation in ('y', 'yes'):
+                    print(self.amity.add_person(role, name, True))
+                else:
+                    raise ValueError('wants accomodation has to be y or yes')
             else:
-                print(self.amity.add_person(person))
+                print(self.amity.add_person(role, name))
         except Exception as e:
             print(e)
 
     @docopt_cmd
     def do_allocate(self, arg):
-        '''Usage: allocate space <first_name> <last_name> <person_type>
-        [wants_accomodation]'''
+        '''Usage: allocate space <name> ...'''
         try:
-            person = arg['<first_name>'] + ' ' + arg['<last_name>']
-            person = {
-                'name': person,
-                'type': arg['<person_type>']
-            }
-            if arg['want_accomodation']:
-                print(self.amity.allocate_space(person, True))
-            else:
-                print(self.amity.allocate_space(person))
+            person_name = ' '.join(arg['<name>'])
+            print(self.amity.allocate_person(person_name))
         except Exception as e:
             print(e)
 
@@ -145,11 +153,13 @@ class AmityApplication(cmd.Cmd):
 
     @docopt_cmd
     def do_remove(self, arg):
-        '''Usage: remove person <first_name> <last_name> <room_name>'''
+        '''Usage: remove person <name> ... [-r]'''
         try:
-            person = arg['<first_name>'] + ' ' + arg['<last_name>']
-            room = arg['<room_name>']
-            print(self.amity.remove_person(person, room))
+            person = ' '.join(arg['<name>'])
+            if arg['-r']:
+                self.amity.remove_person_from_room(person)
+            else:
+                print(self.amity.remove_person(person))
         except Exception as e:
             print(e)
 
@@ -173,12 +183,12 @@ class AmityApplication(cmd.Cmd):
                 print(self.amity.print_room(arg['<room_name>']))
             elif arg['allocations']:
                 if arg['--o']:
-                    print(self.amity.print_allocations(arg['--o']))
+                    print(self.amity.print_allocations(filename=arg['--o']))
                 else:
                     print(self.amity.print_allocations())
             elif arg['unallocated']:
                 if arg['--o']:
-                    print(self.amity.print_unallocated(arg['--o']))
+                    print(self.amity.print_unallocated(filename=arg['--o']))
                 else:
                     print(self.amity.print_unallocated())
         except Exception as e:
