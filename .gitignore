@@ -2,7 +2,7 @@
 tags
 design/
 .pyc
-*/__pycache__
+*__pycache__
 .cache
 .coverage
 .coveragerc
@@ -13,3 +13,5 @@ design/
 !requirements.txt
 *.sqlite
 .vscode/
+htmlcov/
+.noseids
