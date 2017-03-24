@@ -161,6 +161,7 @@ class AmityApplication(cmd.Cmd):
     @docopt_cmd
     def do_load(self, arg):
         '''Usage: load people <filename> | state <database>'''
+        # import pdb; pdb.set_trace()
         try:
             if arg['people']:
                 self.amity.load_people(arg['<filename>'])

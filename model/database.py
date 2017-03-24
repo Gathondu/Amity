@@ -40,8 +40,8 @@ class Database:
 
     def __init__(self, database=None):
         if database:
-            self.database = ''
-            if '.sqlite' not in database:
+            self.database = database
+            if '.sqlite' not in self.database:
                 self.database += '.sqlite'
         else:
             self.database = 'amity.sqlite'
