@@ -1,38 +1,40 @@
 #!/usr/local/bin/python3
 # -*- coding: utf-8 -*-
-
-
-from unittest import TestCase, skip
+import pytest
 
 from model.room import Room, Office, LivingSpace
 
 
-class TestRoom(TestCase):
+@pytest.fixture(scope='module')
+def office(request):
+    return Office('valhalla')
 
-    def setUp(self):
-        self.office = Office('valhalla')
-        self.livingspace = LivingSpace('dojo')
 
-    def test_room_is_created_correctly(self):
-        self.assertIsInstance(self.office, Office)
-        self.assertIsInstance(self.livingspace, LivingSpace)
+@pytest.fixture(scope='module')
+def livingspace(request):
+    return LivingSpace('dojo')
 
-    def test_room_name_is_correct(self):
-        self.assertEqual('valhalla', self.office.name)
-        self.assertEqual('dojo', self.livingspace.name)
 
-    def test_max_space_is_correct(self):
-        self.assertEqual(6, self.office.max_space)
-        self.assertEqual(4, self.livingspace.max_space)
+def test_room_name_is_correct(office, livingspace):
+    assert office.name == 'valhalla'
+    assert livingspace.name == 'dojo'
 
-    def test_room_type_is_correct(self):
-        self.assertEqual('livingspace', self.livingspace.room_type)
-        self.assertEqual('office', self.office.room_type)
 
-    def test_max_space_is_correctly_updated(self):
-        self.office.max_space_set(7)
-        self.assertEqual(7, self.office.max_space)
+def test_max_space_is_correct(office, livingspace):
+    assert office.max_space == 6
+    assert livingspace.max_space == 4
 
-    def test_non_int_max_space_value_raies_ValueError(self):
-        with self.assertRaises(ValueError):
-            self.office.max_space_set('a')
+
+def test_room_type_is_correct(office, livingspace):
+    assert livingspace.room_type == 'livingspace'
+    assert office.room_type == 'office'
+
+
+def test_max_space_is_correctly_updated(office):
+    office.max_space_set(7)
+    assert office.max_space == 7
+
+
+def test_non_int_max_space_value_raies_ValueError(office):
+    with pytest.raises(ValueError):
+        office.max_space_set('a')

@@ -1,50 +1,52 @@
 #!/usr/local/bin/python3
 # -*- coding: utf-8 -*-
-
-
-from unittest import TestCase, skip
+import pytest
 
 from model.person import Person, Staff, Fellow
 
 
-class TestPerson(TestCase):
+@pytest.fixture(scope='module')
+def staff(request):
+    return Staff('denis')
 
-    def setUp(self):
-        self.s = Staff('denis')
-        self.f = Fellow('dng')
-        self.fellow = Fellow('dan', True)
 
-    def test_cannot_create_person_without_name(self):
-        with self.assertRaises(TypeError):
-            s = Staff()
+@pytest.fixture(scope='module')
+def fellow(request):
+    return Fellow('dng')
 
-    def test_person_created_with_correct_values(self):
-        self.assertEqual(
-            ['denis', 'dng', 'dan'],
-            [self.s.name, self.f.name, self.fellow.name]
-        )
 
-    def test_person_created_correctly(self):
-        self.assertIsInstance(self.s, Staff)
-        self.assertIsInstance(self.fellow, Fellow)
+@pytest.fixture(scope='module')
+def fellow_with_livingspace(request):
+    return Fellow('dan', True)
 
-    def test_person_type_is_correct(self):
-        self.assertEqual(
-            ['staff', 'fellow', 'fellow'],
-            [self.s.person_type, self.f.person_type,
-             self.fellow.person_type]
-        )
 
-    def test_fellow_can_opt_out_of_living_space(self):
-        self.assertFalse(self.f.wants_livingspace)
+def test_cannot_create_person_without_name(staff):
+    with pytest.raises(TypeError):
+        staff = Staff()
 
-    def test_fellow_can_opt_for_living_space(self):
-        self.assertTrue(self.fellow.wants_livingspace)
 
-    def test_fellow_can_change_living_space_option(self):
-        self.f.wants_livingspace = True
-        self.assertTrue(self.f.wants_livingspace)
+def test_person_created_with_correct_values(staff, fellow):
+    assert [staff.name, fellow.name] == ['denis', 'dng']
 
-    def test_fellow_can_opt_out_of_living_space_after_creation(self):
-        self.fellow.wants_livingspace = False
-        self.assertFalse(self.fellow.wants_livingspace)
+
+def test_person_type_is_correct(staff, fellow):
+    assert [staff.person_type, fellow.person_type] ==\
+        ['staff', 'fellow']
+
+
+def test_fellow_can_opt_out_of_living_space(fellow):
+    assert fellow.wants_livingspace is False
+
+
+def test_fellow_can_opt_for_living_space(fellow_with_livingspace):
+    assert fellow_with_livingspace.wants_livingspace
+
+
+def test_fellow_can_change_living_space_option(fellow):
+    fellow.wants_livingspace = True
+    assert fellow.wants_livingspace
+
+
+def test_fellow_can_opt_out_of_living_space_after_creation(fellow_with_livingspace):
+    fellow_with_livingspace.wants_livingspace = False
+    assert fellow_with_livingspace.wants_livingspace is False
