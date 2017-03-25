@@ -10,6 +10,7 @@ design/
 *.txt
 *.db
 !people.txt
+!rooms.txt
 !requirements.txt
 *.sqlite
 .vscode/

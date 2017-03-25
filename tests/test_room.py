@@ -6,12 +6,12 @@ from model.room import Room, Office, LivingSpace
 
 
 @pytest.fixture(scope='module')
-def office(request):
+def office():
     return Office('valhalla')
 
 
 @pytest.fixture(scope='module')
-def livingspace(request):
+def livingspace():
     return LivingSpace('dojo')
 
 

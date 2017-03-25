@@ -6,17 +6,17 @@ from model.person import Person, Staff, Fellow
 
 
 @pytest.fixture(scope='module')
-def staff(request):
+def staff():
     return Staff('denis')
 
 
 @pytest.fixture(scope='module')
-def fellow(request):
+def fellow():
     return Fellow('dng')
 
 
 @pytest.fixture(scope='module')
-def fellow_with_livingspace(request):
+def fellow_with_livingspace():
     return Fellow('dan', True)
 
 
