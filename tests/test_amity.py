@@ -5,7 +5,6 @@ import pytest
 from termcolor import colored
 
 from model.amity import Amity
-from model.database import Database
 
 
 @pytest.fixture(scope='module')

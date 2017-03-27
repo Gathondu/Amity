@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 import pytest
 
-from model.room import Room, Office, LivingSpace
+from model.room import Office, LivingSpace
 
 
 @pytest.fixture(scope='module')

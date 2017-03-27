@@ -1,5 +1,6 @@
 # AMITY
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/708d38695958481d8efaeca15e419ba6)](https://www.codacy.com/app/Gathondu/Amity?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=Gathondu/Amity&amp;utm_campaign=Badge_Grade)
+[![Codacy Badge](https://api.codacy.com/project/badge/Coverage/708d38695958481d8efaeca15e419ba6)](https://www.codacy.com/app/Gathondu/Amity?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=Gathondu/Amity&amp;utm_campaign=Badge_Coverage)
 [![CircleCI](https://circleci.com/gh/Gathondu/Amity/tree/develop.svg?style=svg)](https://circleci.com/gh/Gathondu/Amity/tree/develop)
 
 This is a room allocation system that randomly allocates rooms to people.
