@@ -1,0 +1,14 @@
+machine:
+    python:
+        version: 3.5.2
+dependencies:
+    pre:
+        - pip install -r requirements.txt
+test:
+    override:
+        - py.test
+deployment:
+  production:
+    branch: develop
+    commands:
+      - python-codacy-coverage -r coverage.xml
