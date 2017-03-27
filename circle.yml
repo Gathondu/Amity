@@ -7,3 +7,8 @@ dependencies:
 test:
     override:
         - py.test
+deployment:
+  production:
+    branch: develop
+    commands:
+      - python-codacy-coverage -r coverage.xml
