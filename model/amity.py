@@ -113,7 +113,6 @@ class Amity:
     def allocate_office(self, name, person_type):
         """Allocate office to staff or fellow."""
         rooms = self.get_room(available_rooms='office')
-        result = ''
         if not rooms:
             return colored(
                 'There are no available offices to allocate {}!'

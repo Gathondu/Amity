@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 import pytest
 
-from model.person import Person, Staff, Fellow
+from model.person import Staff, Fellow
 
 
 @pytest.fixture(scope='module')
